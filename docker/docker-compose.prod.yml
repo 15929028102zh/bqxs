@@ -1,0 +1,334 @@
+version: '3.8'
+
+# 边墙鲜送系统生产环境 Docker Compose 配置
+# 服务器IP: 8.154.40.188
+# 优化版本，包含健康检查、资源限制、重启策略等
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: fresh-delivery-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-FreshDelivery2024!@#}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-fresh_delivery}
+      MYSQL_USER: ${MYSQL_USERNAME:-fresh_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-FreshUser2024!@#}
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+      - ./mysql/conf:/etc/mysql/conf.d:ro
+      - mysql_logs:/var/log/mysql
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=512M
+      --max-connections=200
+      --query-cache-size=64M
+      --slow-query-log=1
+      --slow-query-log-file=/var/log/mysql/slow.log
+      --long-query-time=2
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-FreshDelivery2024!@#}"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    networks:
+      - fresh-delivery-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis缓存
+  redis:
+    image: redis:7.0-alpine
+    container_name: fresh-delivery-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/etc/redis/redis.conf:ro
+    command: >
+      redis-server /etc/redis/redis.conf
+      --requirepass ${REDIS_PASSWORD:-Redis2024!@#}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-Redis2024!@#}", "ping"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    networks:
+      - fresh-delivery-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 后端服务
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        - JAVA_OPTS=${JAVA_OPTS:--Xmx2g -Xms1g -XX:+UseG1GC}
+    image: fresh-delivery/backend:latest
+    container_name: fresh-delivery-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SERVER_PORT: 8080
+      
+      # 数据库配置
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-fresh_delivery}
+      MYSQL_USERNAME: ${MYSQL_USERNAME:-fresh_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-FreshUser2024!@#}
+      
+      # Redis配置
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-Redis2024!@#}
+      
+      # 应用配置
+      JWT_SECRET: ${JWT_SECRET:-fresh-delivery-jwt-secret-2024}
+      FILE_DOMAIN: ${FILE_DOMAIN:-https://8.154.40.188}
+      
+      # 微信配置
+      WECHAT_APPID: ${WECHAT_APPID:-your_wechat_miniprogram_appid}
+      WECHAT_SECRET: ${WECHAT_SECRET:-your_wechat_miniprogram_secret}
+      
+      # JVM配置
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx2g -Xms1g -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/app/logs/}
+      
+      # 时区
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - backend_logs:/app/logs
+      - backend_uploads:/app/uploads
+      - backend_temp:/tmp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    networks:
+      - fresh-delivery-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # 前端管理系统
+  admin-frontend:
+    build:
+      context: ../admin-frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://8.154.40.188/api
+        - VITE_FILE_DOMAIN=https://8.154.40.188
+    image: fresh-delivery/admin-frontend:latest
+    container_name: fresh-delivery-admin
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - ./nginx/admin.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+    networks:
+      - fresh-delivery-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:1.24-alpine
+    container_name: fresh-delivery-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+      - nginx_cache:/var/cache/nginx
+    environment:
+      - SERVER_NAME=${SERVER_NAME:-8.154.40.188}
+    depends_on:
+      backend:
+        condition: service_healthy
+      admin-frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+    networks:
+      - fresh-delivery-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 监控服务 - Prometheus (可选)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: fresh-delivery-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    profiles:
+      - monitoring
+    networks:
+      - fresh-delivery-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 监控服务 - Grafana (可选)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: fresh-delivery-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-Admin2024!@#}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    profiles:
+      - monitoring
+    depends_on:
+      - prometheus
+    networks:
+      - fresh-delivery-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mysql_data:
+    driver: local
+  mysql_logs:
+    driver: local
+  redis_data:
+    driver: local
+  backend_logs:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_temp:
+    driver: local
+  nginx_logs:
+    driver: local
+  nginx_cache:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  fresh-delivery-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: fresh-delivery-br0
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.driver.mtu: 1500
