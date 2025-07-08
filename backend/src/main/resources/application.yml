@@ -1,0 +1,125 @@
+server:
+  port: 8081
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: fresh-delivery-backend
+  profiles:
+    include: upload
+  
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/fresh_delivery?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # Redis配置
+  redis:
+    host: localhost
+    port: 6379
+    password: 
+    database: 0
+    timeout: 5000
+    lettuce:
+      pool:
+        max-active: 20
+        max-wait: -1
+        max-idle: 8
+        min-idle: 0
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+  
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:/mapper/**/*.xml
+
+# JWT配置
+jwt:
+  secret: biangqiang-fresh-delivery-secret-key-2024
+  expiration: 86400000  # 24小时
+  header: Authorization
+  prefix: Bearer
+
+# 文件存储配置（基础配置，详细配置见application-upload.yml）
+file:
+  upload:
+    path: f:/code/backend/uploads
+    domain: http://192.168.229.1:8081
+
+# 微信小程序配置
+# 注意：需要在微信公众平台(https://mp.weixin.qq.com)申请小程序并获取真实的AppID和AppSecret
+wechat:
+  miniapp:
+    app-id: wx10bc8644e4605c02  # 请替换为真实的微信小程序AppID
+    app-secret: edd27a7a26c296fced9d1fd776f6aee9  # 请替换为真实的微信小程序AppSecret
+  # 微信支付配置
+  pay:
+    app-id: wx10bc8644e4605c02  # 微信支付AppID（通常与小程序AppID相同）
+    mch-id: your-merchant-id  # 商户号，需要在微信商户平台申请
+    api-key: your-api-key  # API密钥，在微信商户平台设置
+    cert-path: classpath:cert/apiclient_cert.p12  # 商户证书路径
+    notify-url: http://your-domain.com/api/pay/notify  # 支付结果通知地址
+
+# 日志配置
+logging:
+  level:
+    com.biangqiang: debug
+    mapper: debug
+    com.biangqiang.freshdelivery.mapper: debug  # MyBatis SQL日志
+    org.springframework.web: info
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
+  file:
+    name: logs/fresh-delivery.log
+    max-size: 100MB
+    max-history: 30
+
+# Swagger配置
+springfox:
+  documentation:
+    swagger-ui:
+      enabled: true
+    swagger:
+      v2:
+        path: /api-docs
+
+# 业务配置
+business:
+  # 库存预警阈值
+  stock:
+    warning-threshold: 10
+  # 订单配置
+  order:
+    auto-cancel-minutes: 30  # 未支付订单自动取消时间（分钟）
+    delivery-fee: 3.00       # 配送费
+    free-delivery-amount: 50.00  # 免配送费金额

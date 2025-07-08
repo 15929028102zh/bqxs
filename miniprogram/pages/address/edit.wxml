@@ -1,0 +1,82 @@
+<!--pages/address/edit.wxml-->
+<view class="container">
+  <form bindsubmit="saveAddress">
+    <!-- 收货人信息 -->
+    <view class="form-section">
+      <view class="section-title">收货人信息</view>
+      
+      <view class="form-item">
+        <view class="label">收货人姓名</view>
+        <input class="input" 
+               placeholder="请输入收货人姓名" 
+               value="{{formData.receiverName}}"
+               data-field="receiverName"
+               bindinput="onInputChange" />
+      </view>
+      
+      <view class="form-item">
+        <view class="label">手机号码</view>
+        <input class="input" 
+               placeholder="请输入手机号码" 
+               type="number"
+               maxlength="11"
+               value="{{formData.receiverPhone}}"
+               data-field="receiverPhone"
+               bindinput="onInputChange" />
+      </view>
+    </view>
+    
+    <!-- 收货地址 -->
+    <view class="form-section">
+      <view class="section-title">收货地址</view>
+      
+      <view class="form-item">
+        <view class="label">所在地区</view>
+        <picker mode="region" 
+                value="{{regions}}"
+                bindchange="onRegionChange">
+          <view class="picker-content">
+            <text class="picker-text">{{regions[0]}} {{regions[1]}} {{regions[2]}}</text>
+            <icon type="arrow_right" size="16" color="#ccc"></icon>
+          </view>
+        </picker>
+      </view>
+      
+      <view class="form-item">
+        <view class="label">详细地址</view>
+        <textarea class="textarea" 
+                  placeholder="请输入详细地址，如街道、门牌号等"
+                  value="{{formData.detail}}"
+                  data-field="detail"
+                  bindinput="onInputChange"
+                  maxlength="200"
+                  auto-height></textarea>
+      </view>
+    </view>
+    
+    <!-- 其他设置 -->
+    <view class="form-section">
+      <view class="section-title">其他设置</view>
+      
+      <view class="form-item switch-item">
+        <view class="label">设为默认地址</view>
+        <switch checked="{{formData.isDefault}}"
+                color="#13CE66"
+                bindchange="onDefaultChange" />
+      </view>
+    </view>
+    
+    <!-- 微信地址导入 -->
+    <view class="wechat-address" wx:if="{{!isEdit}}">
+      <view class="wechat-btn" bindtap="getWechatAddress">
+        <icon type="location" size="20" color="#13CE66"></icon>
+        <text>从微信地址导入</text>
+      </view>
+    </view>
+    
+    <!-- 保存按钮 -->
+    <view class="save-btn" bindtap="saveAddress">
+      <text>{{isEdit ? '更新地址' : '保存地址'}}</text>
+    </view>
+  </form>
+</view>

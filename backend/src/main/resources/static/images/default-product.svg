@@ -1,0 +1,22 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="200" height="200" fill="#f5f5f5" rx="8"/>
+  
+  <!-- 图片图标 -->
+  <g transform="translate(50, 50)">
+    <!-- 图片框 -->
+    <rect x="20" y="20" width="60" height="45" fill="#e0e0e0" stroke="#bdbdbd" stroke-width="2" rx="4"/>
+    
+    <!-- 山峰 -->
+    <path d="M25 50 L35 35 L45 45 L55 30 L75 55 L75 60 L25 60 Z" fill="#bdbdbd"/>
+    
+    <!-- 太阳 -->
+    <circle cx="65" cy="30" r="6" fill="#ffd54f"/>
+    
+    <!-- 商品文字 -->
+    <text x="50" y="85" text-anchor="middle" fill="#9e9e9e" font-size="12" font-family="Arial, sans-serif">商品图片</text>
+  </g>
+  
+  <!-- 装饰边框 -->
+  <rect x="2" y="2" width="196" height="196" fill="none" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="5,5" rx="8"/>
+</svg>

@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "隐私协议测试",
+  "usingComponents": {
+    "privacy-modal": "/components/privacy-modal/privacy-modal"
+  }
+}

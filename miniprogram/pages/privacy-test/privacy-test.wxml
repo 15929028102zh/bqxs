@@ -1,0 +1,91 @@
+<!--pages/privacy-test/privacy-test.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">隐私协议测试页面</text>
+    <text class="subtitle">测试隐私授权功能是否正常工作</text>
+  </view>
+
+  <!-- 测试按钮区域 -->
+  <view class="test-section">
+    <text class="section-title">隐私设置测试</text>
+    
+    <button class="test-btn" bindtap="testCheckPrivacySetting">
+      检查隐私设置
+    </button>
+    
+    <button class="test-btn" bindtap="showPrivacyModalManually">
+      手动显示隐私弹窗
+    </button>
+    
+    <button class="test-btn" bindtap="openPrivacyContract">
+      打开隐私协议页面
+    </button>
+  </view>
+
+  <!-- 隐私接口测试 -->
+  <view class="test-section">
+    <text class="section-title">隐私接口测试</text>
+    
+    <button class="test-btn" bindtap="testGetUserProfile">
+      测试 getUserProfile
+    </button>
+    
+    <button class="test-btn" bindtap="testGetLocation">
+      测试 getLocation
+    </button>
+    
+    <button class="test-btn" bindtap="testChooseMedia">
+      测试 chooseMedia
+    </button>
+  </view>
+
+  <!-- 后端服务测试 -->
+  <view class="test-section">
+    <text class="section-title">后端服务测试</text>
+    <button class="test-btn backend-test" bindtap="testBackendConnection">测试后端连接</button>
+    <view class="info-text">检查后端服务是否正常运行</view>
+  </view>
+
+  <!-- 测试结果区域 -->
+  <view class="results-section">
+    <view class="results-header">
+      <text class="section-title">测试结果</text>
+      <button class="clear-btn" bindtap="clearTestResults">清除</button>
+    </view>
+    
+    <view class="results-list" wx:if="{{testResults.length > 0}}">
+      <view class="result-item" wx:for="{{testResults}}" wx:key="id">
+        <view class="result-header">
+          <text class="result-time">{{item.timestamp}}</text>
+          <text class="result-type result-type-{{item.type}}">{{item.type}}</text>
+        </view>
+        <text class="result-action">{{item.action}}</text>
+        <text class="result-content">{{item.result}}</text>
+      </view>
+    </view>
+    
+    <view class="empty-results" wx:else>
+      <text>暂无测试结果</text>
+    </view>
+  </view>
+
+  <!-- 说明区域 -->
+  <view class="info-section">
+    <text class="section-title">使用说明</text>
+    <view class="info-content">
+      <text class="info-item">1. 点击"检查隐私设置"查看当前授权状态</text>
+      <text class="info-item">2. 点击"手动显示隐私弹窗"测试弹窗显示</text>
+      <text class="info-item">3. 点击隐私接口测试按钮验证授权流程</text>
+      <text class="info-item">4. 查看测试结果了解执行情况</text>
+    </view>
+  </view>
+
+  <!-- 隐私弹窗组件 -->
+  <privacy-modal 
+    show="{{showPrivacyModal}}"
+    privacyContractName="{{privacyContractName}}"
+    eventInfo="{{privacyEventInfo}}"
+    bind:agree="onPrivacyAgree"
+    bind:disagree="onPrivacyDisagree"
+  ></privacy-modal>
+</view>

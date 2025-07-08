@@ -1,0 +1,72 @@
+<!--pages/address/list.wxml-->
+<view class="container">
+  <!-- 地址列表 -->
+  <view class="address-list" wx:if="{{addressList.length > 0}}">
+    <view class="address-item" 
+          wx:for="{{addressList}}" 
+          wx:key="id"
+          bindtap="selectAddress"
+          data-index="{{index}}">
+      
+      <view class="address-content">
+        <!-- 收货人信息 -->
+        <view class="receiver-info">
+          <text class="receiver-name">{{item.receiverName}}</text>
+          <text class="receiver-phone">{{item.receiverPhone}}</text>
+          <view class="default-tag" wx:if="{{item.isDefault}}">默认</view>
+        </view>
+        
+        <!-- 详细地址 -->
+        <view class="address-detail">
+          <text>{{item.province}}{{item.city}}{{item.district}}{{item.detail}}</text>
+        </view>
+      </view>
+      
+      <!-- 操作按钮 -->
+      <view class="address-actions" wx:if="{{!isSelectMode}}">
+        <view class="action-btn edit-btn" 
+              bindtap="editAddress" 
+              data-index="{{index}}"
+              catchtap="editAddress">
+          <icon type="edit" size="16" color="#13CE66"></icon>
+          <text>编辑</text>
+        </view>
+        
+        <view class="action-btn delete-btn" 
+              bindtap="deleteAddress" 
+              data-index="{{index}}"
+              catchtap="deleteAddress">
+          <icon type="delete" size="16" color="#ff4757"></icon>
+          <text>删除</text>
+        </view>
+        
+        <view class="action-btn default-btn {{item.isDefault ? 'active' : ''}}" 
+              bindtap="setDefaultAddress" 
+              data-index="{{index}}"
+              catchtap="setDefaultAddress"
+              wx:if="{{!item.isDefault}}">
+          <icon type="star" size="16" color="#ffa502"></icon>
+          <text>设为默认</text>
+        </view>
+      </view>
+      
+      <!-- 选择模式下的选中图标 -->
+      <view class="select-icon" wx:if="{{isSelectMode}}">
+        <icon type="arrow_right" size="16" color="#13CE66"></icon>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <image class="empty-icon" src="{{emptyAddressImage}}" mode="aspectFit"></image>
+    <text class="empty-text">暂无收货地址</text>
+    <text class="empty-desc">添加收货地址，享受便捷配送服务</text>
+  </view>
+  
+  <!-- 添加地址按钮 -->
+  <view class="add-address-btn" bindtap="addAddress">
+    <icon type="add" size="20" color="#fff"></icon>
+    <text>添加新地址</text>
+  </view>
+</view>

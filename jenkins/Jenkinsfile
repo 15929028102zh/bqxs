@@ -1,0 +1,249 @@
+pipeline {
+    agent any
+    
+    environment {
+        // 项目配置
+        PROJECT_NAME = 'biangqiang-fresh-delivery'
+        DOCKER_REGISTRY = 'your-docker-registry.com'
+        
+        // Git配置
+        GIT_REPO = 'https://github.com/your-username/biangqiang-fresh-delivery.git'
+        GIT_BRANCH = 'main'
+        
+        // 部署配置
+        DEPLOY_SERVER = 'your-deploy-server.com'
+        DEPLOY_USER = 'deploy'
+        
+        // 通知配置
+        DINGTALK_WEBHOOK = credentials('dingtalk-webhook')
+        EMAIL_RECIPIENTS = 'admin@biangqiang.com'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '开始拉取代码...'
+                git branch: "${GIT_BRANCH}", url: "${GIT_REPO}"
+                
+                script {
+                    env.BUILD_TIME = sh(returnStdout: true, script: 'date +"%Y-%m-%d %H:%M:%S"').trim()
+                    env.GIT_COMMIT_SHORT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                }
+            }
+        }
+        
+        stage('Build Backend') {
+            steps {
+                echo '开始构建后端服务...'
+                dir('backend') {
+                    sh 'mvn clean compile'
+                    sh 'mvn test'
+                    sh 'mvn package -DskipTests'
+                }
+            }
+            post {
+                always {
+                    // 发布测试报告
+                    publishTestResults testResultsPattern: 'backend/target/surefire-reports/*.xml'
+                    // 发布代码覆盖率报告
+                    publishCoverage adapters: [jacocoAdapter('backend/target/site/jacoco/jacoco.xml')]
+                }
+            }
+        }
+        
+        stage('Build Frontend') {
+            steps {
+                echo '开始构建前端管理系统...'
+                dir('admin-frontend') {
+                    sh 'npm install --registry=https://registry.npmmirror.com'
+                    sh 'npm run lint'
+                    sh 'npm run build'
+                }
+            }
+        }
+        
+        stage('Code Quality Analysis') {
+            parallel {
+                stage('SonarQube Analysis') {
+                    steps {
+                        echo '开始代码质量分析...'
+                        withSonarQubeEnv('SonarQube') {
+                            dir('backend') {
+                                sh 'mvn sonar:sonar'
+                            }
+                        }
+                    }
+                }
+                
+                stage('Security Scan') {
+                    steps {
+                        echo '开始安全扫描...'
+                        // 使用OWASP Dependency Check进行安全扫描
+                        dependencyCheck additionalArguments: '--format XML --format HTML', odcInstallation: 'OWASP-DC'
+                        dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                    }
+                }
+            }
+        }
+        
+        stage('Build Docker Images') {
+            steps {
+                echo '开始构建Docker镜像...'
+                script {
+                    // 构建后端镜像
+                    def backendImage = docker.build("${PROJECT_NAME}-backend:${BUILD_NUMBER}", "./backend")
+                    
+                    // 构建前端镜像
+                    def frontendImage = docker.build("${PROJECT_NAME}-admin:${BUILD_NUMBER}", "./admin-frontend")
+                    
+                    // 推送到镜像仓库
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-registry-credentials') {
+                        backendImage.push()
+                        backendImage.push('latest')
+                        frontendImage.push()
+                        frontendImage.push('latest')
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Staging') {
+            steps {
+                echo '开始部署到测试环境...'
+                script {
+                    // 部署到测试环境
+                    sshagent(['deploy-ssh-key']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} '
+                                cd /opt/fresh-delivery/staging && \
+                                docker-compose pull && \
+                                docker-compose up -d && \
+                                docker system prune -f
+                            '
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Integration Tests') {
+            steps {
+                echo '开始集成测试...'
+                script {
+                    // 等待服务启动
+                    sleep(time: 30, unit: 'SECONDS')
+                    
+                    // 执行集成测试
+                    dir('tests') {
+                        sh 'npm install'
+                        sh 'npm run test:integration'
+                    }
+                }
+            }
+            post {
+                always {
+                    // 发布集成测试报告
+                    publishTestResults testResultsPattern: 'tests/reports/*.xml'
+                }
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo '开始部署到生产环境...'
+                script {
+                    // 需要手动确认
+                    input message: '确认部署到生产环境？', ok: '确认部署',
+                          submitterParameter: 'APPROVER'
+                    
+                    // 部署到生产环境
+                    sshagent(['deploy-ssh-key']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER} '
+                                cd /opt/fresh-delivery/production && \
+                                docker-compose pull && \
+                                docker-compose up -d && \
+                                docker system prune -f
+                            '
+                        """
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '清理工作空间...'
+            cleanWs()
+        }
+        
+        success {
+            echo '构建成功！'
+            script {
+                // 发送成功通知
+                sendNotification('success')
+            }
+        }
+        
+        failure {
+            echo '构建失败！'
+            script {
+                // 发送失败通知
+                sendNotification('failure')
+            }
+        }
+        
+        unstable {
+            echo '构建不稳定！'
+            script {
+                // 发送警告通知
+                sendNotification('unstable')
+            }
+        }
+    }
+}
+
+// 发送通知函数
+def sendNotification(status) {
+    def color = status == 'success' ? 'good' : (status == 'failure' ? 'danger' : 'warning')
+    def emoji = status == 'success' ? '✅' : (status == 'failure' ? '❌' : '⚠️')
+    def message = """
+        ${emoji} **边墙鲜送项目构建${status == 'success' ? '成功' : (status == 'failure' ? '失败' : '不稳定')}**
+        
+        **项目**: ${PROJECT_NAME}
+        **分支**: ${GIT_BRANCH}
+        **提交**: ${env.GIT_COMMIT_SHORT}
+        **构建号**: ${BUILD_NUMBER}
+        **构建时间**: ${env.BUILD_TIME}
+        **构建耗时**: ${currentBuild.durationString}
+        
+        [查看构建详情](${BUILD_URL})
+    """
+    
+    // 发送钉钉通知
+    if (env.DINGTALK_WEBHOOK) {
+        sh """
+            curl -X POST ${env.DINGTALK_WEBHOOK} \
+                -H 'Content-Type: application/json' \
+                -d '{
+                    "msgtype": "markdown",
+                    "markdown": {
+                        "title": "构建通知",
+                        "text": "${message}"
+                    }
+                }'
+        """
+    }
+    
+    // 发送邮件通知
+    emailext (
+        subject: "[Jenkins] ${PROJECT_NAME} 构建${status == 'success' ? '成功' : '失败'} - Build #${BUILD_NUMBER}",
+        body: message,
+        to: env.EMAIL_RECIPIENTS,
+        mimeType: 'text/html'
+    )
+}

@@ -1,0 +1,79 @@
+<!--pages/cart/cart.wxml-->
+<view class="container">
+  <!-- 未登录状态 -->
+  <view class="not-login" wx:if="{{!isLoggedIn && !loading}}">
+    <image class="empty-icon" src="{{emptyCartImage}}" mode="aspectFit"></image>
+    <text class="empty-text">购物车空空如也</text>
+    <button class="login-btn" bindtap="goToLogin">立即登录</button>
+    <button class="home-btn" bindtap="goToHome">去逛逛</button>
+  </view>
+
+  <!-- 已登录但购物车为空 -->
+  <view class="empty-cart" wx:if="{{isLoggedIn && !cartItems.length && !loading}}">
+    <image class="empty-icon" src="{{emptyCartImage}}" mode="aspectFit"></image>
+    <text class="empty-text">购物车空空如也</text>
+    <button class="home-btn" bindtap="goToHome">去逛逛</button>
+  </view>
+
+  <!-- 购物车列表 -->
+  <view class="cart-content" wx:if="{{cartItems.length > 0}}">
+    <!-- 全选栏 -->
+    <view class="select-all-bar">
+      <view class="select-all" bindtap="onSelectAll">
+        <icon class="select-icon" type="{{selectAll ? 'success' : 'circle'}}" size="20" color="{{selectAll ? '#13CE66' : '#ccc'}}"></icon>
+        <text class="select-text">全选</text>
+      </view>
+    </view>
+
+    <!-- 商品列表 -->
+    <view class="cart-list">
+      <view class="cart-item" wx:for="{{cartItems}}" wx:key="id">
+        <view class="item-select" bindtap="onItemSelect" data-index="{{index}}">
+          <icon class="select-icon" type="{{item.selected ? 'success' : 'circle'}}" size="20" color="{{item.selected ? '#13CE66' : '#ccc'}}"></icon>
+        </view>
+        
+        <image class="item-image" src="{{item.productImages[0]}}" mode="aspectFill"></image>
+        
+        <view class="item-info">
+          <text class="item-name">{{item.productName}}</text>
+          <text class="item-spec">{{item.productSpecification}}</text>
+          <view class="item-price-row">
+            <text class="item-price">¥{{item.price}}</text>
+          </view>
+          
+          <view class="item-actions">
+            <view class="quantity-control">
+              <view class="quantity-btn" bindtap="updateQuantity" data-index="{{index}}" data-type="minus">
+                <icon type="minus" size="14" color="#999"></icon>
+              </view>
+              <text class="quantity-text">{{item.quantity}}</text>
+              <view class="quantity-btn" bindtap="updateQuantity" data-index="{{index}}" data-type="plus">
+                <icon type="plus" size="14" color="#999"></icon>
+              </view>
+            </view>
+            
+            <view class="delete-btn" bindtap="deleteItem" data-index="{{index}}">
+              <icon type="clear" size="16" color="#999"></icon>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+</view>
+
+<!-- 底部结算栏 -->
+<view class="checkout-bar" wx:if="{{cartItems.length > 0}}">
+  <view class="total-info">
+    <text class="total-label">合计：</text>
+    <text class="total-amount">¥{{totalAmount}}</text>
+  </view>
+  <button class="checkout-btn" bindtap="goToCheckout" disabled="{{selectedItems.length === 0}}">
+    结算({{selectedItems.length}})
+  </button>
+</view>

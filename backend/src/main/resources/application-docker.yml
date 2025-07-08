@@ -1,0 +1,99 @@
+# Docker 环境配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: fresh-delivery-backend
+  
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:fresh_delivery}?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:fresh_user}
+    password: ${MYSQL_PASSWORD:fresh_pass}
+    
+  # 连接池配置
+  hikari:
+    minimum-idle: 5
+    maximum-pool-size: 20
+    auto-commit: true
+    idle-timeout: 30000
+    pool-name: DateSourceHikariCP
+    max-lifetime: 1800000
+    connection-timeout: 30000
+    
+  # Redis 配置
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+        
+  # JPA 配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:mapper/*.xml
+  
+# 文件上传配置
+file:
+  upload:
+    path: /app/uploads/
+    domain: ${FILE_DOMAIN:http://localhost:8080}
+    max-size: 10MB
+    
+# 日志配置
+logging:
+  level:
+    com.biangqiang.freshdelivery: info
+    org.springframework.web: info
+  file:
+    name: /app/logs/fresh-delivery.log
+  pattern:
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+    console: '%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
+    
+# 微信小程序配置
+wechat:
+  miniprogram:
+    app-id: ${WECHAT_APPID:your_app_id}
+    app-secret: ${WECHAT_SECRET:your_app_secret}
+    
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET:fresh-delivery-secret-key-2024}
+  expiration: 86400000
+  
+# 跨域配置
+cors:
+  allowed-origins: "*"
+  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  allowed-headers: "*"
+  allow-credentials: true

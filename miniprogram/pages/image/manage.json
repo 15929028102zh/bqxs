@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "图片资源管理",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 50,
+  "backgroundColor": "#f5f5f5",
+  "navigationBarBackgroundColor": "#4CAF50",
+  "navigationBarTextStyle": "white",
+  "usingComponents": {}
+}

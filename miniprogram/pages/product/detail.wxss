@@ -1,0 +1,346 @@
+/* pages/product/detail.wxss */
+.container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding-bottom: 120rpx;
+}
+
+/* 商品图片区域 */
+.image-section {
+  position: relative;
+  background-color: #fff;
+}
+
+.product-swiper {
+  width: 100%;
+  height: 750rpx;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+}
+
+.image-indicator {
+  position: absolute;
+  bottom: 20rpx;
+  right: 20rpx;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+
+/* 商品信息区域 */
+.product-info {
+  background-color: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.product-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.4;
+  margin-bottom: 16rpx;
+}
+
+.product-desc {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 24rpx;
+}
+
+.price-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.current-price {
+  font-size: 48rpx;
+  color: #ff4757;
+  font-weight: bold;
+  margin-right: 20rpx;
+}
+
+.original-price {
+  font-size: 28rpx;
+  color: #999;
+  text-decoration: line-through;
+  margin-right: 20rpx;
+}
+
+.product-tags {
+  flex: 1;
+  text-align: right;
+}
+
+.tag {
+  background-color: #ff4757;
+  color: #fff;
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  font-size: 20rpx;
+}
+
+.product-specs {
+  border-top: 1rpx solid #f5f5f5;
+  padding-top: 24rpx;
+}
+
+.spec-item {
+  display: flex;
+  margin-bottom: 16rpx;
+}
+
+.spec-label {
+  width: 120rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.spec-value {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+
+/* 商品详情区域 */
+.detail-section {
+  background-color: #fff;
+  padding: 30rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.detail-content {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* 底部操作栏 */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120rpx;
+  background-color: #fff;
+  border-top: 1rpx solid #eee;
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+  z-index: 100;
+}
+
+.action-buttons {
+  display: flex;
+  margin-right: 20rpx;
+}
+
+.contact-btn, .cart-btn {
+  width: 100rpx;
+  height: 80rpx;
+  background-color: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 20rpx;
+  color: #666;
+  margin-right: 20rpx;
+  position: relative;
+}
+
+.cart-badge {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  background-color: #ff4757;
+  color: #fff;
+  border-radius: 50%;
+  width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  text-align: center;
+  font-size: 18rpx;
+}
+
+.buy-buttons {
+  flex: 1;
+  display: flex;
+}
+
+.add-cart-btn, .buy-now-btn {
+  flex: 1;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  text-align: center;
+  margin: 0 8rpx;
+}
+
+.add-cart-btn {
+  background-color: #ffa726;
+  color: #fff;
+}
+
+.buy-now-btn {
+  background-color: #13CE66;
+  color: #fff;
+}
+
+/* 数量选择弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 1000;
+}
+
+.quantity-modal {
+  width: 100%;
+  background-color: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 40rpx 30rpx;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40rpx;
+  position: relative;
+}
+
+.modal-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  margin-right: 20rpx;
+}
+
+.modal-info {
+  flex: 1;
+}
+
+.modal-price {
+  font-size: 36rpx;
+  color: #ff4757;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.modal-stock {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.quantity-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.quantity-label {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  border: 1rpx solid #eee;
+  border-radius: 6rpx;
+}
+
+.quantity-btn {
+  width: 60rpx;
+  height: 60rpx;
+  background-color: #f8f8f8;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quantity-btn[disabled] {
+  opacity: 0.5;
+}
+
+.quantity-btn:first-child {
+  border-radius: 6rpx 0 0 6rpx;
+}
+
+.quantity-btn:last-child {
+  border-radius: 0 6rpx 6rpx 0;
+}
+
+.quantity-text {
+  width: 80rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  text-align: center;
+  font-size: 28rpx;
+  background-color: #fff;
+  border-left: 1rpx solid #eee;
+  border-right: 1rpx solid #eee;
+}
+
+.modal-buttons {
+  display: flex;
+}
+
+.modal-add-cart, .modal-buy-now {
+  flex: 1;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  text-align: center;
+  margin: 0 8rpx;
+}
+
+.modal-add-cart {
+  background-color: #ffa726;
+  color: #fff;
+}
+
+.modal-buy-now {
+  background-color: #13CE66;
+  color: #fff;
+}
+
+/* 加载状态 */
+.loading {
+  text-align: center;
+  padding: 200rpx 0;
+  color: #999;
+  font-size: 28rpx;
+}

@@ -1,0 +1,98 @@
+<!--pages/image/manage.wxml-->
+<view class="container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <text class="page-title">图片资源管理</text>
+    <view class="header-actions">
+      <view class="action-btn" bindtap="showCacheInfo">
+        <icon type="info" size="16"></icon>
+        <text>缓存</text>
+      </view>
+      <view class="action-btn" bindtap="clearImageCache">
+        <icon type="clear" size="16"></icon>
+        <text>清除</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-section">
+    <view class="search-bar">
+      <icon class="search-icon" type="search" size="16"></icon>
+      <input class="search-input" placeholder="搜索图片..." value="{{searchKeyword}}" bindinput="onSearchInput" bindconfirm="performSearch"></input>
+      <view class="search-clear" wx:if="{{searchKeyword}}" bindtap="clearSearch">
+        <icon type="clear" size="14"></icon>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分类选择 -->
+  <view class="category-tabs">
+    <view class="tab-item {{currentCategory === item.id ? 'active' : ''}}" 
+          wx:for="{{imageCategories}}" 
+          wx:key="id" 
+          bindtap="switchCategory" 
+          data-category="{{item.id}}">
+      <image class="tab-icon" src="{{item.icon}}" mode="aspectFit"></image>
+      <text class="tab-name">{{item.name}}</text>
+    </view>
+  </view>
+
+  <!-- 上传按钮 -->
+  <view class="upload-section">
+    <view class="upload-btn" bindtap="chooseAndUploadImage" disabled="{{uploading}}">
+      <icon type="plus" size="20" color="#fff"></icon>
+      <text>{{uploading ? '上传中...' : '上传图片'}}</text>
+    </view>
+    <view class="upload-btn batch" bindtap="batchUploadImages" disabled="{{uploading}}">
+      <icon type="download" size="20" color="#fff"></icon>
+      <text>批量上传</text>
+    </view>
+  </view>
+
+  <!-- 图片列表 -->
+  <view class="image-list" wx:if="{{!loading && imageList.length > 0}}">
+    <view class="image-item" wx:for="{{imageList}}" wx:key="id">
+      <view class="image-wrapper" bindtap="previewImage" data-url="{{item.url}}">
+        <image class="image" src="{{item.url}}" mode="aspectFill" lazy-load></image>
+        <view class="image-overlay">
+          <icon type="search" size="24" color="#fff"></icon>
+        </view>
+      </view>
+      
+      <view class="image-info">
+        <text class="image-title">{{item.title}}</text>
+        <text class="image-meta">{{item.size}} · {{item.uploadTime}}</text>
+        
+        <view class="image-actions">
+          <view class="action-item" bindtap="copyImageUrl" data-url="{{item.url}}">
+            <icon type="download" size="14"></icon>
+            <text>复制链接</text>
+          </view>
+          <view class="action-item" bindtap="getCompressedImage" data-url="{{item.url}}">
+            <icon type="success" size="14"></icon>
+            <text>压缩版</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-section" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-section" wx:if="{{!loading && imageList.length === 0}}">
+    <image class="empty-icon" src="{{emptyDataImage}}" mode="aspectFit"></image>
+    <text class="empty-text">暂无图片资源</text>
+    <text class="empty-desc">点击上方按钮上传图片</text>
+  </view>
+
+  <!-- 底部提示 -->
+  <view class="footer-tip" wx:if="{{imageList.length > 0}}">
+    <text>共 {{imageList.length}} 张图片</text>
+  </view>
+</view>

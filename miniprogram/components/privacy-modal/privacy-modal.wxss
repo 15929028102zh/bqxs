@@ -1,0 +1,109 @@
+/* components/privacy-modal/privacy-modal.wxss */
+.privacy-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.privacy-content {
+  width: 80%;
+  max-width: 400px;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.privacy-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.privacy-text {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  text-align: justify;
+}
+
+.privacy-contract-link {
+  color: #1989fa;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.privacy-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.privacy-btn {
+  flex: 1;
+  height: 44px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.privacy-btn-disagree {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.privacy-btn-agree {
+  background-color: #1989fa;
+  color: #fff;
+}
+
+.privacy-btn-agree::after {
+  border: none;
+}
+
+.privacy-btn-disagree::after {
+  border: none;
+}
+
+/* 动画效果 */
+.privacy-modal {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.privacy-content {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

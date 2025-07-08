@@ -1,0 +1,55 @@
+<!--pages/order/logistics.wxml-->
+<view class="container">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-text">加载中...</view>
+  </view>
+
+  <!-- 物流信息 -->
+  <view wx:else class="logistics-container">
+    <!-- 物流公司信息 -->
+    <view wx:if="{{logistics}}" class="logistics-header">
+      <view class="company-info">
+        <view class="company-name">{{logistics.company || '暂无物流公司'}}</view>
+        <view class="tracking-no" bindtap="copyTrackingNo">
+          <text>快递单号：{{logistics.trackingNo || '暂无单号'}}</text>
+          <text class="copy-hint">点击复制</text>
+        </view>
+      </view>
+      <view class="status">
+        <text class="status-text">{{logistics.status || '运输中'}}</text>
+      </view>
+    </view>
+
+    <!-- 物流轨迹 -->
+    <view wx:if="{{trackingInfo.length > 0}}" class="tracking-timeline">
+      <view class="timeline-title">物流轨迹</view>
+      <view class="timeline-list">
+        <view 
+          wx:for="{{trackingInfo}}" 
+          wx:key="index" 
+          class="timeline-item {{index === 0 ? 'current' : ''}}"
+        >
+          <view class="timeline-dot"></view>
+          <view class="timeline-content">
+            <view class="timeline-desc">{{item.description}}</view>
+            <view class="timeline-time">{{item.time}}</view>
+            <view wx:if="{{item.location}}" class="timeline-location">{{item.location}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 暂无物流信息 -->
+    <view wx:else class="no-logistics">
+      <view class="no-logistics-icon">📦</view>
+      <view class="no-logistics-text">暂无物流信息</view>
+      <view class="no-logistics-desc">商品可能还未发货，请耐心等待</view>
+    </view>
+
+    <!-- 底部操作 -->
+    <view class="bottom-actions">
+      <button class="action-btn" bindtap="contactService">联系客服</button>
+    </view>
+  </view>
+</view>

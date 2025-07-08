@@ -1,0 +1,220 @@
+/* pages/login/login.wxss */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #13CE66 0%, #57D9A3 100%);
+  padding: 60rpx 40rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 顶部logo区域 */
+.header {
+  text-align: center;
+  margin-bottom: 120rpx;
+  margin-top: 80rpx;
+}
+
+.logo {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 30rpx;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 20rpx;
+}
+
+.app-name {
+  display: block;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 16rpx;
+}
+
+.app-desc {
+  display: block;
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 登录表单区域 */
+.login-form {
+  background-color: #fff;
+  border-radius: 24rpx;
+  padding: 60rpx 40rpx;
+  margin-bottom: 60rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+}
+
+.form-title {
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.form-title text {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 登录按钮 */
+.login-btn {
+  width: 100%;
+  height: 96rpx;
+  border-radius: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 24rpx;
+  border: none;
+  position: relative;
+}
+
+.login-btn[disabled] {
+  opacity: 0.6;
+}
+
+.btn-icon {
+  margin-right: 16rpx;
+}
+
+.wx-login-btn {
+  background-color: #13CE66;
+  color: #fff;
+}
+
+.quick-login-btn {
+  background-color: #f8f8f8;
+  color: #13CE66;
+  border: 2rpx solid #13CE66;
+}
+
+.phone-login-btn {
+  background-color: #f8f8f8;
+  color: #666;
+  border: 2rpx solid #eee;
+}
+
+/* 隐私协议配置提示 */
+.privacy-config-notice {
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 2rpx solid rgba(255, 193, 7, 0.3);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 40rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.notice-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.notice-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.notice-text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+}
+
+.notice-solution {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* 底部说明 */
+.footer {
+  text-align: center;
+}
+
+.privacy-notice {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 40rpx;
+  line-height: 1.5;
+}
+
+.privacy-notice .link {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.skip-btn {
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
+  border-radius: 48rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 28rpx;
+  width: 300rpx;
+}
+
+/* 装饰元素 */
+.decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.circle-1 {
+  width: 200rpx;
+  height: 200rpx;
+  top: 10%;
+  right: -100rpx;
+  animation: float 6s ease-in-out infinite;
+}
+
+.circle-2 {
+  width: 120rpx;
+  height: 120rpx;
+  bottom: 20%;
+  left: -60rpx;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+.circle-3 {
+  width: 80rpx;
+  height: 80rpx;
+  top: 30%;
+  left: 20%;
+  animation: float 10s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* 确保内容在装饰元素之上 */
+.header,
+.login-form,
+.footer {
+  position: relative;
+  z-index: 1;
+}

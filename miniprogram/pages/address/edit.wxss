@@ -1,0 +1,141 @@
+/* pages/address/edit.wxss */
+.container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding-bottom: 120rpx;
+}
+
+/* 表单区域 */
+.form-section {
+  background-color: #fff;
+  margin-bottom: 20rpx;
+  padding: 0 30rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  padding: 30rpx 0 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+/* 表单项 */
+.form-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 30rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.form-item:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-size: 28rpx;
+  color: #333;
+  width: 200rpx;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+}
+
+.input::placeholder {
+  color: #999;
+}
+
+.textarea {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  min-height: 120rpx;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+}
+
+.textarea::placeholder {
+  color: #999;
+}
+
+/* 选择器 */
+.picker-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+/* 开关项 */
+.switch-item {
+  align-items: center;
+}
+
+/* 微信地址导入 */
+.wechat-address {
+  padding: 30rpx;
+}
+
+.wechat-btn {
+  background-color: #fff;
+  border: 1rpx solid #13CE66;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #13CE66;
+  font-size: 28rpx;
+}
+
+.wechat-btn text {
+  margin-left: 12rpx;
+}
+
+/* 保存按钮 */
+.save-btn {
+  position: fixed;
+  bottom: 40rpx;
+  left: 40rpx;
+  right: 40rpx;
+  background-color: #13CE66;
+  color: #fff;
+  border-radius: 50rpx;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: 0 8rpx 24rpx rgba(19, 206, 102, 0.3);
+}
+
+.save-btn:active {
+  background-color: #11b85a;
+}
+
+/* 响应式调整 */
+@media (max-width: 375px) {
+  .label {
+    width: 160rpx;
+    font-size: 26rpx;
+  }
+  
+  .input, .textarea, .picker-text {
+    font-size: 26rpx;
+  }
+}

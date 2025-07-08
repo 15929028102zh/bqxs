@@ -1,0 +1,197 @@
+// 全局样式文件
+
+// 重置样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100%;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+// 通用类
+.clearfix::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.pull-left {
+  float: left;
+}
+
+.pull-right {
+  float: right;
+}
+
+.mb-10 {
+  margin-bottom: 10px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+.ml-10 {
+  margin-left: 10px;
+}
+
+.mr-10 {
+  margin-right: 10px;
+}
+
+// 布局相关
+.app-container {
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  
+  h1 {
+    font-size: 24px;
+    font-weight: 500;
+    color: #303133;
+  }
+}
+
+.filter-container {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+}
+
+.table-container {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.04);
+}
+
+// 表格样式
+.el-table {
+  .el-table__header {
+    th {
+      background-color: #fafafa;
+      color: #606266;
+      font-weight: 500;
+    }
+  }
+}
+
+// 状态标签
+.status-tag {
+  &.active {
+    background-color: #f0f9ff;
+    color: #1890ff;
+    border-color: #91d5ff;
+  }
+  
+  &.inactive {
+    background-color: #fff2f0;
+    color: #ff4d4f;
+    border-color: #ffccc7;
+  }
+  
+  &.pending {
+    background-color: #fffbe6;
+    color: #faad14;
+    border-color: #ffe58f;
+  }
+}
+
+// 操作按钮
+.operation-btn {
+  margin-right: 8px;
+  
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+// 响应式
+@media (max-width: 768px) {
+  .app-container {
+    padding: 10px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    h1 {
+      margin-bottom: 10px;
+    }
+  }
+  
+  .filter-container {
+    padding: 15px;
+  }
+}
+
+// NProgress样式覆盖
+#nprogress .bar {
+  background: #409eff !important;
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px #409eff, 0 0 5px #409eff !important;
+}
+
+#nprogress .spinner-icon {
+  border-top-color: #409eff !important;
+  border-left-color: #409eff !important;
+}

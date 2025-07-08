@@ -1,0 +1,34 @@
+<!--components/privacy-modal/privacy-modal.wxml-->
+<view class="privacy-modal" wx:if="{{show}}" bindtap="preventTap">
+  <view class="privacy-content" catchtap="preventTap">
+    <view class="privacy-title">隐私授权提示</view>
+    
+    <view class="privacy-text">
+      为了更好地为您提供服务，我们需要获取您的相关信息。请您仔细阅读
+      <text class="privacy-contract-link" bindtap="handleOpenPrivacyContract">{{privacyContractName}}</text>
+      ，了解我们如何收集、使用您的个人信息。
+    </view>
+    
+    <view class="privacy-text">
+      点击"同意并继续"即表示您已阅读并同意上述协议，我们将依据协议内容为您提供服务。
+    </view>
+    
+    <view class="privacy-buttons">
+      <button 
+        class="privacy-btn privacy-btn-disagree" 
+        bindtap="handleDisagreePrivacyAuthorization"
+      >
+        拒绝
+      </button>
+      
+      <button 
+        id="privacy-agree-btn"
+        class="privacy-btn privacy-btn-agree" 
+        open-type="agreePrivacyAuthorization"
+        bindagreeprivacyauthorization="handleAgreePrivacyAuthorization"
+      >
+        同意并继续
+      </button>
+    </view>
+  </view>
+</view>

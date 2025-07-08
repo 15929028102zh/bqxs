@@ -1,0 +1,85 @@
+<!--pages/profile/profile.wxml-->
+<view class="container">
+  <!-- 用户信息区域 -->
+  <view class="user-section">
+    <view class="user-info" wx:if="{{userInfo}}">
+      <button class="avatar-btn" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+        <image class="user-avatar" src="{{userInfo.avatar || defaultAvatarImage}}" mode="aspectFill"></image>
+      </button>
+      <view class="user-details">
+        <input class="user-nickname" 
+               value="{{userInfo.nickname || '微信用户'}}" 
+               type="nickname" 
+               placeholder="请输入昵称"
+               bind:blur="onNicknameChange" />
+        <text class="user-phone">{{userInfo.phone || '未绑定手机号'}}</text>
+      </view>
+    </view>
+    
+    <view class="login-section" wx:else>
+      <image class="default-avatar" src="{{defaultAvatarImage}}" mode="aspectFill"></image>
+      <view class="login-info">
+        <text class="login-text">点击登录</text>
+        <button class="login-btn" bindtap="goToLogin">立即登录</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 订单统计 -->
+  <view class="order-section">
+    <view class="section-header" bindtap="goToOrderList">
+      <text class="section-title">我的订单</text>
+      <view class="section-more">
+        <text>查看全部</text>
+        <icon type="arrow" size="12" color="#999"></icon>
+      </view>
+    </view>
+    
+    <view class="order-stats">
+      <view class="order-stat-item" bindtap="goToOrderList" data-status="0">
+        <text class="stat-number">{{orderStats.pending}}</text>
+        <text class="stat-label">待付款</text>
+      </view>
+      <view class="order-stat-item" bindtap="goToOrderList" data-status="2">
+        <text class="stat-number">{{orderStats.shipped}}</text>
+        <text class="stat-label">待收货</text>
+      </view>
+      <view class="order-stat-item" bindtap="goToOrderList" data-status="3">
+        <text class="stat-number">{{orderStats.completed}}</text>
+        <text class="stat-label">已完成</text>
+      </view>
+      <view class="order-stat-item" bindtap="goToOrderList" data-status="5">
+        <text class="stat-number">{{orderStats.refund}}</text>
+        <text class="stat-label">退款/售后</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-section">
+    <view class="menu-item" 
+          wx:for="{{menuItems}}" 
+          wx:key="title" 
+          bindtap="goToMenu" 
+          data-url="{{item.url}}">
+      <view class="menu-left">
+        <image class="menu-icon" src="{{item.icon}}" mode="aspectFit"></image>
+        <text class="menu-title">{{item.title}}</text>
+      </view>
+      <icon class="menu-arrow" type="arrow" size="12" color="#999"></icon>
+    </view>
+  </view>
+
+  <!-- 客服联系 -->
+  <view class="service-section">
+    <button class="service-btn" bindtap="contactService">
+      <icon type="service" size="16" color="#13CE66"></icon>
+      <text>联系客服</text>
+    </button>
+  </view>
+
+  <!-- 退出登录 -->
+  <view class="logout-section" wx:if="{{userInfo}}">
+    <button class="logout-btn" bindtap="logout">退出登录</button>
+  </view>
+</view>

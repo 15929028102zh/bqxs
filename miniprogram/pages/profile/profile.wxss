@@ -1,0 +1,211 @@
+/* pages/profile/profile.wxss */
+.container {
+  min-height: 100vh;
+  background-color: #f8f8f8;
+  padding: 20rpx;
+}
+
+/* 用户信息区域 */
+.user-section {
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 40rpx 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.avatar-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  margin-right: 30rpx;
+}
+
+.user-avatar, .default-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  border: 2rpx solid #eee;
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-nickname {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12rpx;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.user-phone {
+  font-size: 26rpx;
+  color: #999;
+  display: block;
+}
+
+/* 登录区域 */
+.login-section {
+  display: flex;
+  align-items: center;
+}
+
+.login-info {
+  flex: 1;
+  margin-left: 30rpx;
+}
+
+.login-text {
+  font-size: 32rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.login-btn {
+  width: 160rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  background-color: #13CE66;
+  color: #fff;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+/* 订单统计区域 */
+.order-section {
+  background-color: #fff;
+  border-radius: 12rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.section-more {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  color: #999;
+}
+
+.order-stats {
+  display: flex;
+  justify-content: space-around;
+}
+
+.order-stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #13CE66;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 功能菜单区域 */
+.menu-section {
+  background-color: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+}
+
+.menu-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 20rpx;
+}
+
+.menu-title {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.menu-arrow {
+  transform: rotate(90deg);
+}
+
+/* 客服区域 */
+.service-section {
+  margin-bottom: 20rpx;
+}
+
+.service-btn {
+  width: 100%;
+  height: 80rpx;
+  background-color: #fff;
+  border: 2rpx solid #13CE66;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #13CE66;
+}
+
+.service-btn icon {
+  margin-right: 12rpx;
+}
+
+/* 退出登录区域 */
+.logout-section {
+  margin-top: 40rpx;
+}
+
+.logout-btn {
+  width: 100%;
+  height: 80rpx;
+  background-color: #ff4757;
+  color: #fff;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  text-align: center;
+  line-height: 80rpx;
+}

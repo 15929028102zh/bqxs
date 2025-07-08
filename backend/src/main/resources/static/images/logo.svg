@@ -1,0 +1,13 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="80" cy="80" r="80" fill="#13CE66"/>
+  
+  <!-- 叶子图标 -->
+  <path d="M50 80C50 65 60 50 80 50C100 50 110 65 110 80C110 95 100 110 80 110C60 110 50 95 50 80Z" fill="#fff" opacity="0.9"/>
+  
+  <!-- 茎部 -->
+  <rect x="78" y="110" width="4" height="20" fill="#fff" opacity="0.8"/>
+  
+  <!-- 文字 -->
+  <text x="80" y="145" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">鲜送</text>
+</svg>

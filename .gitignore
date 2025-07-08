@@ -1,0 +1,88 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Maven
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+uploads/
+temp/
+
+# Cache
+.cache/
+*.tmp
+*.temp
+
+# Maven dependencies
+apache-maven-3.9.1/
+apache-maven-3.9.1-bin.zip
+
+# Backend specific
+backend/target/
+backend/logs/
+backend/uploads/
+backend/BOOT-INF/
+
+# Frontend specific
+admin-frontend/dist/
+admin-frontend/node_modules/
+
+# Docker
+.env
+docker-compose.override.yml
+
+# Test files
+*.ps1
+test-*.ps1
+
+# Documentation temp files
+*.md.backup
+
+# SSL certificates
+*.crt
+*.key
+*.pem
+
+# Backup files
+*.backup
+*.bak
+*.old
