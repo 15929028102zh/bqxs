@@ -112,4 +112,21 @@ public class Result<T> implements Serializable {
     public boolean isSuccess() {
         return ResultCode.SUCCESS.getCode().equals(this.code);
     }
+
+    // 手动添加getter方法
+    public Integer getCode() {
+        return code;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public Long getTimestamp() {
+        return timestamp;
+    }
 }

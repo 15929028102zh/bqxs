@@ -83,7 +83,13 @@ public class ProductVO {
      * 销量
      */
     private Integer sales;
-    
+
+    /**
+     * 销售额
+     */
+    @Schema(description = "销售额")
+    private BigDecimal revenue;
+
     /**
      * 是否推荐 0-否 1-是
      */
@@ -151,6 +157,10 @@ public class ProductVO {
 
     public void setSales(Integer sales) {
         this.sales = sales;
+    }
+
+    public void setRevenue(BigDecimal revenue) {
+        this.revenue = revenue;
     }
 
     public void setIsRecommend(Integer isRecommend) {

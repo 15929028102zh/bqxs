@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fresh-delivery
+  labels:
+    name: fresh-delivery
+    environment: production
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fresh-delivery-staging
+  labels:
+    name: fresh-delivery-staging
+    environment: staging

@@ -5,7 +5,7 @@ import com.biangqiang.freshdelivery.service.ImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -18,7 +18,7 @@ import java.util.Map;
  * @author biangqiang
  * @since 2024-01-01
  */
-@Slf4j
+
 @Tag(name = "图片资源", description = "图片资源相关接口")
 @RestController
 @RequestMapping("/image")
@@ -41,7 +41,7 @@ public class ImageController {
             
             return Result.success(result);
         } catch (Exception e) {
-            log.error("获取商品图片失败: productId={}", productId, e);
+            // 获取商品图片失败
             return Result.error("获取商品图片失败");
         }
     }
@@ -58,7 +58,7 @@ public class ImageController {
             
             return Result.success(result);
         } catch (Exception e) {
-            log.error("获取分类图片失败: categoryId={}", categoryId, e);
+            // 获取分类图片失败
             return Result.error("获取分类图片失败");
         }
     }
@@ -75,7 +75,7 @@ public class ImageController {
             
             return Result.success(result);
         } catch (Exception e) {
-            log.error("获取用户头像失败: userId={}", userId, e);
+            // 获取用户头像失败
             return Result.error("获取用户头像失败");
         }
     }
@@ -87,7 +87,7 @@ public class ImageController {
             List<Map<String, Object>> banners = imageService.getBannerImages();
             return Result.success(banners);
         } catch (Exception e) {
-            log.error("获取轮播图失败", e);
+            // 获取轮播图失败
             return Result.error("获取轮播图失败");
         }
     }
@@ -104,7 +104,7 @@ public class ImageController {
             
             return Result.success(result);
         } catch (Exception e) {
-            log.error("获取默认图片失败: type={}", type, e);
+            // 获取默认图片失败
             return Result.error("获取默认图片失败");
         }
     }
@@ -130,7 +130,7 @@ public class ImageController {
             
             return Result.success(result);
         } catch (Exception e) {
-            log.error("压缩图片失败: url={}, width={}, height={}", url, width, height, e);
+            // 压缩图片失败
             return Result.error("压缩图片失败");
         }
     }
@@ -184,7 +184,7 @@ public class ImageController {
             
             return Result.success(result);
         } catch (Exception e) {
-            log.error("批量获取图片失败", e);
+            // 批量获取图片失败
             return Result.error("批量获取图片失败");
         }
     }

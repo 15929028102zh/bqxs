@@ -104,4 +104,53 @@ public interface ProductService {
      * @param ids 商品ID列表
      */
     void batchDeleteProducts(List<Long> ids);
+    
+    // 统计相关方法
+    
+    /**
+     * 获取商品总数
+     *
+     * @return 商品总数
+     */
+    Long getTotalProductCount();
+    
+    /**
+     * 获取热门商品统计信息
+     *
+     * @param limit 数量限制
+     * @return 热门商品统计列表
+     */
+    List<java.util.Map<String, Object>> getHotProductsStats(Integer limit);
+    
+    /**
+     * 获取商品分类统计
+     *
+     * @return 分类统计列表
+     */
+    List<java.util.Map<String, Object>> getCategoryStats();
+    
+    /**
+     * 获取库存预警商品
+     *
+     * @param threshold 库存阈值
+     * @return 低库存商品列表
+     */
+    List<java.util.Map<String, Object>> getLowStockProducts(Integer threshold);
+    
+    /**
+     * 更新商品库存
+     *
+     * @param productId 商品ID
+     * @param quantity 扣减数量（正数为扣减，负数为增加）
+     * @return 是否更新成功
+     */
+    boolean updateStock(Long productId, Integer quantity);
+    
+    /**
+     * 批量更新商品库存
+     *
+     * @param stockUpdates 库存更新列表，Map包含productId和quantity
+     * @return 是否全部更新成功
+     */
+    boolean batchUpdateStock(List<java.util.Map<String, Object>> stockUpdates);
 }

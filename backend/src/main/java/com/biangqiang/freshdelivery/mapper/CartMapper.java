@@ -36,7 +36,7 @@ public interface CartMapper extends BaseMapper<Cart> {
      * @return 购物车列表
      */
     @Select("SELECT c.*, p.name as productName, p.price, p.images, p.stock " +
-            "FROM tb_cart c LEFT JOIN tb_product p ON c.product_id = p.id " +
+            "FROM `tb_cart` c LEFT JOIN `tb_product` p ON c.product_id = p.id " +
             "WHERE c.user_id = #{userId} AND c.deleted = 0 AND p.deleted = 0 " +
             "ORDER BY c.create_time DESC")
     List<CartWithProductDTO> selectCartWithProductByUserId(@Param("userId") Long userId);

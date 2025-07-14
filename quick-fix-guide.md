@@ -9,7 +9,15 @@
 **原因：** Dockerfile 中使用了 `npm ci --only=production`，跳过了构建工具 vite
 **状态：** ✅ 已修复
 
-### 2. 后端镜像构建失败
+### 2. 前端ESLint错误
+**错误信息：** `RollupError: ESLint found problems`
+**原因：** 
+- 未使用的变量 (no-unused-vars)
+- console语句 (no-console)
+- 代码质量检查失败
+**状态：** ✅ 已修复
+
+### 3. 后端镜像构建失败
 **错误信息：** `failed to solve: process "/bin/sh -c apt-get update && apt-get install -y maven" did not complete successfully: exit code: 100`
 **原因：** 
 - Dockerfile中重复apt-get update和Maven安装问题
@@ -17,12 +25,12 @@
 - 默认镜像源在某些网络环境下不稳定
 **状态：** ✅ 已修复（优化为多阶段构建 + 网络优化）
 
-### 3. 后端镜像构建被跳过
+### 4. 后端镜像构建被跳过
 **错误信息：** `后端Dockerfile不存在，跳过后端镜像构建`
 **原因：** 部署脚本中的路径配置错误
 **状态：** ✅ 已修复
 
-### 4. 配置文件解析错误
+### 5. 配置文件解析错误
 **错误信息：** `SELECT 1: 未找到命令`
 **原因：** 配置值包含空格但未用引号包围
 **状态：** ✅ 已修复
@@ -37,6 +45,7 @@ bash fix-deployment-issues.sh
 
 # 或者分步修复
 bash fix-deployment-issues.sh fix-frontend      # 仅修复前端问题
+bash fix-deployment-issues.sh fix-eslint        # 修复前端ESLint错误
 bash fix-deployment-issues.sh fix-backend       # 仅修复后端路径问题
 bash fix-deployment-issues.sh optimize-backend  # 优化后端Dockerfile
 bash fix-deployment-issues.sh fix-config        # 仅修复配置问题
@@ -62,7 +71,30 @@ RUN npm ci --only=production
 RUN npm ci
 ```
 
-#### 2. 优化后端 Dockerfile
+#### 2. 修复前端ESLint错误
+
+编辑 `admin-frontend/src/views/system/settings/index.vue`：
+
+```javascript
+// 删除未使用的变量
+// const uploadUrl = ref('')
+// const handleLogoSuccess = () => {}
+// const beforeLogoUpload = () => {}
+// const saveImageSettings = () => {}
+
+// 注释掉console语句
+// console.log('debug info')
+
+// 或配置ESLint规则 (.eslintrc.js)
+module.exports = {
+  rules: {
+    'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+    'no-unused-vars': 'warn'
+  }
+}
+```
+
+#### 3. 优化后端 Dockerfile
 
 编辑 `backend/Dockerfile`，使用多阶段构建并添加网络优化：
 
@@ -111,7 +143,7 @@ ENV SPRING_PROFILES_ACTIVE=docker
 CMD ["java", "-jar", "app.jar"]
 ```
 
-#### 3. 修复部署脚本
+#### 4. 修复部署脚本
 
 编辑 `deploy-automation.sh`：
 
@@ -125,7 +157,7 @@ if [ -f "$PROJECT_ROOT/backend/Dockerfile" ]; then
     docker build -t "$backend_image" "$PROJECT_ROOT/backend"
 ```
 
-#### 4. 修复配置文件
+#### 5. 修复配置文件
 
 编辑 `deployment-config.env`，为以下配置项添加引号：
 
@@ -148,6 +180,10 @@ SWAGGER_TITLE="边墙鲜送API文档"
 grep "npm ci" admin-frontend/Dockerfile
 # 应该显示：RUN npm ci（不包含 --only=production）
 
+# 检查前端ESLint修复
+cd admin-frontend && npm run lint
+# 应该没有错误输出
+
 # 检查部署脚本
 grep "backend/Dockerfile" deploy-automation.sh
 # 应该显示包含 backend/Dockerfile 的行
@@ -160,8 +196,12 @@ grep 'DB_POOL_VALIDATION_QUERY="SELECT 1"' deployment-config.env
 ### 2. 测试构建
 
 ```bash
-# 测试前端构建
+# 测试前端ESLint和构建
 cd admin-frontend
+npm run lint
+npm run build
+
+# 测试前端Docker构建
 docker build -t test-frontend .
 
 # 测试后端构建
@@ -198,6 +238,14 @@ docker-compose -f docker-compose.prod.yml up -d
 bash fix-deployment-issues.sh
 # 或
 sh fix-deployment-issues.sh
+```
+
+### Q: ESLint错误仍然存在
+**A:** 手动检查和修复：
+```bash
+cd admin-frontend
+npm run lint -- --fix  # 自动修复部分问题
+# 手动删除未使用的变量和console语句
 ```
 
 ### Q: Docker 构建仍然失败
@@ -242,6 +290,7 @@ sudo systemctl restart docker
 通过以上修复，您的部署问题应该已经解决：
 
 - ✅ 前端镜像可以正常构建
+- ✅ 前端ESLint错误已修复
 - ✅ 后端镜像可以正常构建
 - ✅ 配置文件可以正常加载
 - ✅ 部署脚本功能完整

@@ -498,7 +498,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { getSystemImages, updateSystemImage } from '@/api/upload';
+import { getSystemImages } from '@/api/upload';
 import ImageUpload from '@/components/ImageUpload.vue';
 import dayjs from 'dayjs';
 
@@ -522,8 +522,7 @@ const paymentFormRef = ref();
 const smsFormRef = ref();
 const imageFormRef = ref();
 
-// 上传地址
-const uploadUrl = ref('/api/upload/image');
+// 上传地址 - 已移除未使用的变量
 
 // 基本设置表单
 const basicForm = reactive({
@@ -638,29 +637,7 @@ const handleDeliveryTimeChange = (times) => {
   }
 };
 
-// Logo上传成功
-const handleLogoSuccess = (response) => {
-  if (response.code === 200) {
-    basicForm.siteLogo = response.data.url;
-    ElMessage.success('Logo上传成功');
-  } else {
-    ElMessage.error('Logo上传失败');
-  }
-};
-
-// Logo上传前验证
-const beforeLogoUpload = (file) => {
-  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
-  const isLt2M = file.size / 1024 / 1024 < 2;
-
-  if (!isJPG) {
-    ElMessage.error('Logo只能是 JPG/PNG 格式!');
-  }
-  if (!isLt2M) {
-    ElMessage.error('Logo大小不能超过 2MB!');
-  }
-  return isJPG && isLt2M;
-};
+// Logo上传相关函数已移除 - 使用ImageUpload组件处理
 
 // 保存基本设置
 const handleBasicSubmit = async () => {
@@ -752,7 +729,7 @@ const handleSmsTest = async () => {
     testLoading.value = true;
 
     // 模拟API调用
-    console.log('发送测试短信到:', phone);
+    // console.log('发送测试短信到:', phone);
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     ElMessage.success(`测试短信已发送到 ${phone}`)
@@ -838,22 +815,7 @@ const formatTime = (time) => {
   return time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-';
 };
 
-// 保存图片设置
-const saveImageSettings = async () => {
-  try {
-    imageLoading.value = true;
-    
-    // 调用API保存图片设置
-    await updateSystemImage(imageForm);
-    
-    ElMessage.success('图片设置保存成功');
-  } catch (error) {
-    console.error('保存图片设置失败:', error);
-    ElMessage.error('保存图片设置失败');
-  } finally {
-    imageLoading.value = false;
-  }
-};
+// 保存图片设置 - 已移除未使用的函数
 
 // 加载图片设置
 const loadImageSettings = async () => {
@@ -861,7 +823,8 @@ const loadImageSettings = async () => {
     const response = await getSystemImages();
     Object.assign(imageForm, response.data);
   } catch (error) {
-    console.error('加载图片设置失败:', error);
+    // console.error('加载图片设置失败:', error);
+    ElMessage.error('加载图片设置失败');
   }
 };
 

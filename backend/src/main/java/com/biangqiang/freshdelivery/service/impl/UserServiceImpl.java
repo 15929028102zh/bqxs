@@ -17,6 +17,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -368,5 +369,40 @@ public class UserServiceImpl implements UserService {
         
         int result = userMapper.deleteById(userId);
         return result > 0;
+    }
+    
+    // 统计相关方法实现
+    
+    @Override
+    public Long getTotalUserCount() {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getStatus, 1); // 只统计正常状态的用户
+        return userMapper.selectCount(queryWrapper);
+    }
+    
+    @Override
+    public Long getTodayUserCount(LocalDate date) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ge(User::getCreateTime, date.atStartOfDay())
+                   .lt(User::getCreateTime, date.plusDays(1).atStartOfDay())
+                   .eq(User::getStatus, 1); // 只统计正常状态的用户
+        return userMapper.selectCount(queryWrapper);
+    }
+    
+    @Override
+    public Long getNewUserCountByDate(LocalDate date) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ge(User::getCreateTime, date.atStartOfDay())
+                   .lt(User::getCreateTime, date.plusDays(1).atStartOfDay())
+                   .eq(User::getStatus, 1); // 只统计正常状态的用户
+        return userMapper.selectCount(queryWrapper);
+    }
+    
+    @Override
+    public Long getTotalUserCountByDate(LocalDate date) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.le(User::getCreateTime, date.plusDays(1).atStartOfDay())
+                   .eq(User::getStatus, 1); // 只统计正常状态的用户
+        return userMapper.selectCount(queryWrapper);
     }
 }

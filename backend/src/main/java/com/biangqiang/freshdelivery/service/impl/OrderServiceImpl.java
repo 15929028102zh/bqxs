@@ -12,6 +12,7 @@ import com.biangqiang.freshdelivery.mapper.OrderItemMapper;
 import com.biangqiang.freshdelivery.mapper.OrderMapper;
 import com.biangqiang.freshdelivery.service.CartService;
 import com.biangqiang.freshdelivery.service.OrderService;
+import com.biangqiang.freshdelivery.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 订单服务实现类
@@ -44,6 +47,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final AddressMapper addressMapper;
     private final OrderItemMapper orderItemMapper;
     private final CartService cartService;
+    private final ProductService productService;
 
     @Override
     @Transactional
@@ -126,7 +130,34 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 orderItemMapper.insert(item);
             }
 
-            // 5. 清理购物车中已下单的商品
+            // 5. 扣减商品库存
+            try {
+                List<Map<String, Object>> stockUpdates = new ArrayList<>();
+                for (Map<String, Object> product : productsList) {
+                    Long productId = Long.valueOf(Optional.ofNullable(product.get("id")).orElse(0).toString());
+                    Integer quantity = Integer.valueOf(Optional.ofNullable(product.get("quantity")).orElse(0).toString());
+                    
+                    if (productId > 0 && quantity > 0) {
+                        Map<String, Object> stockUpdate = new HashMap<>();
+                        stockUpdate.put("productId", productId);
+                        stockUpdate.put("quantity", quantity);
+                        stockUpdates.add(stockUpdate);
+                    }
+                }
+                
+                if (!stockUpdates.isEmpty()) {
+                    boolean stockUpdateSuccess = productService.batchUpdateStock(stockUpdates);
+                    if (!stockUpdateSuccess) {
+                        throw new RuntimeException("库存扣减失败，订单创建失败");
+                    }
+                    log.info("订单创建库存扣减成功，订单号：{}, 扣减商品数：{}", order.getOrderNo(), stockUpdates.size());
+                }
+            } catch (Exception e) {
+                log.error("订单创建库存扣减失败，订单号：{}, 错误信息：{}", order.getOrderNo(), e.getMessage());
+                throw new RuntimeException("库存扣减失败: " + e.getMessage());
+            }
+
+            // 6. 清理购物车中已下单的商品
             try {
                 // 提取已下单商品的ID列表
                 List<Long> orderedProductIds = new ArrayList<>();
@@ -147,7 +178,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 // 购物车清理失败不影响订单创建，只记录警告日志
             }
 
-            // 6. 返回结果
+            // 7. 返回结果
             Map<String, Object> result = new HashMap<>();
             result.put("orderId", order.getId());
             result.put("orderNo", order.getOrderNo());
@@ -360,6 +391,148 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             itemQueryWrapper.orderByAsc(OrderItem::getId);
             List<OrderItem> items = orderItemMapper.selectList(itemQueryWrapper);
             order.setItems(items);
+        }
+    }
+
+    // 统计相关方法实现
+    
+    @Override
+    public BigDecimal getTotalRevenue() {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Order::getStatus, 4); // 只统计已完成的订单
+        queryWrapper.select(Order::getTotalAmount);
+        
+        return this.list(queryWrapper).stream()
+                .map(Order::getTotalAmount)
+                .filter(amount -> amount != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    @Override
+    public Long getTodayOrderCount(LocalDate date) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ge(Order::getCreateTime, date.atStartOfDay())
+                   .lt(Order::getCreateTime, date.plusDays(1).atStartOfDay());
+        return this.count(queryWrapper);
+    }
+
+    @Override
+    public BigDecimal getTodayRevenue(LocalDate date) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ge(Order::getCreateTime, date.atStartOfDay())
+                   .lt(Order::getCreateTime, date.plusDays(1).atStartOfDay())
+                   .eq(Order::getStatus, 4); // 只统计已完成的订单
+        queryWrapper.select(Order::getTotalAmount);
+        
+        return this.list(queryWrapper).stream()
+                .map(Order::getTotalAmount)
+                .filter(amount -> amount != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    @Override
+    public Long getOrderCountByStatus(Integer status) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Order::getStatus, status);
+        return this.count(queryWrapper);
+    }
+
+    @Override
+    public Long getOrderCountByDate(LocalDate date) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ge(Order::getCreateTime, date.atStartOfDay())
+                   .lt(Order::getCreateTime, date.plusDays(1).atStartOfDay());
+        return this.count(queryWrapper);
+    }
+
+    @Override
+    public BigDecimal getRevenueByDate(LocalDate date) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ge(Order::getCreateTime, date.atStartOfDay())
+                   .lt(Order::getCreateTime, date.plusDays(1).atStartOfDay())
+                   .eq(Order::getStatus, 4); // 只统计已完成的订单
+        queryWrapper.select(Order::getTotalAmount);
+        
+        return this.list(queryWrapper).stream()
+                .map(Order::getTotalAmount)
+                .filter(amount -> amount != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    @Override
+    public List<Map<String, Object>> getRecentOrders(Integer limit) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByDesc(Order::getCreateTime)
+                   .last("LIMIT " + limit);
+        
+        List<Order> orders = this.list(queryWrapper);
+        return orders.stream().map(order -> {
+            Map<String, Object> orderMap = new HashMap<>();
+            orderMap.put("id", order.getId());
+            orderMap.put("orderNo", order.getOrderNo());
+            orderMap.put("userId", order.getUserId());
+            orderMap.put("totalAmount", order.getTotalAmount());
+            orderMap.put("status", order.getStatus());
+            orderMap.put("statusText", getStatusText(order.getStatus()));
+            orderMap.put("createTime", order.getCreateTime());
+            orderMap.put("paymentMethod", order.getPayType());
+            return orderMap;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Map<String, Object>> getSalesReport(LocalDate startDate, LocalDate endDate, String type) {
+        List<Map<String, Object>> reportData = new ArrayList<>();
+        
+        if ("day".equals(type)) {
+            LocalDate current = startDate;
+            while (!current.isAfter(endDate)) {
+                Map<String, Object> dayData = new HashMap<>();
+                dayData.put("date", current.toString());
+                dayData.put("orders", getOrderCountByDate(current));
+                dayData.put("amount", getRevenueByDate(current));
+                reportData.add(dayData);
+                current = current.plusDays(1);
+            }
+        }
+        
+        return reportData;
+    }
+
+    @Override
+    public BigDecimal getTotalAmountByDateRange(LocalDate startDate, LocalDate endDate) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ge(Order::getCreateTime, startDate.atStartOfDay())
+                   .lt(Order::getCreateTime, endDate.plusDays(1).atStartOfDay())
+                   .eq(Order::getStatus, 4); // 只统计已完成的订单
+        queryWrapper.select(Order::getTotalAmount);
+        
+        return this.list(queryWrapper).stream()
+                .map(Order::getTotalAmount)
+                .filter(amount -> amount != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    @Override
+    public Long getTotalOrdersByDateRange(LocalDate startDate, LocalDate endDate) {
+        LambdaQueryWrapper<Order> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.ge(Order::getCreateTime, startDate.atStartOfDay())
+                   .lt(Order::getCreateTime, endDate.plusDays(1).atStartOfDay());
+        return this.count(queryWrapper);
+    }
+    
+    /**
+     * 获取订单状态文本
+     */
+    private String getStatusText(Integer status) {
+        if (status == null) return "未知";
+        switch (status) {
+            case 1: return "待付款";
+            case 2: return "待发货";
+            case 3: return "已发货";
+            case 4: return "已完成";
+            case 5: return "已取消";
+            default: return "未知";
         }
     }
 }

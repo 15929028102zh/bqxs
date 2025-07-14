@@ -3,7 +3,7 @@ package com.biangqiang.freshdelivery.controller;
 import com.biangqiang.freshdelivery.common.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * @author biangqiang
  * @since 2024-01-01
  */
-@Slf4j
+
 @Tag(name = "系统配置", description = "系统配置相关接口")
 @RestController
 @RequestMapping("/system")
@@ -73,7 +73,7 @@ public class SystemController {
             
             return Result.success(result);
         } catch (Exception e) {
-            log.error("获取系统图片配置失败", e);
+            // 获取系统图片配置失败
             return Result.error("获取系统图片配置失败");
         }
     }
@@ -100,13 +100,13 @@ public class SystemController {
                         systemImages.put(key, value);
                     }
                     
-                    log.info("更新系统图片配置: {} = {}", key, value);
+                    // 更新系统图片配置
                 }
             }
             
             return Result.success("更新成功");
         } catch (Exception e) {
-            log.error("更新系统图片配置失败", e);
+            // 更新系统图片配置失败
             return Result.error("更新系统图片配置失败: " + e.getMessage());
         }
     }
@@ -127,10 +127,10 @@ public class SystemController {
             ));
             systemImages.put("appIcon", "/uploads/system/app-icon.png");
             
-            log.info("重置系统图片配置成功");
+            // 重置系统图片配置成功
             return Result.success("重置成功");
         } catch (Exception e) {
-            log.error("重置系统图片配置失败", e);
+            // 重置系统图片配置失败
             return Result.error("重置系统图片配置失败: " + e.getMessage());
         }
     }
@@ -158,7 +158,7 @@ public class SystemController {
             
             return Result.success(systemInfo);
         } catch (Exception e) {
-            log.error("获取系统信息失败", e);
+            // 获取系统信息失败
             return Result.error("获取系统信息失败");
         }
     }

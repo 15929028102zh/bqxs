@@ -66,7 +66,7 @@
               <el-radio-group
                 v-model="salesPeriod"
                 size="small"
-                @change="loadSalesChart"
+                @change="handlePeriodChange"
               >
                 <el-radio-button label="week">近7天</el-radio-button>
                 <el-radio-button label="month">近30天</el-radio-button>
@@ -138,15 +138,16 @@
             <div class="data-content">
               <el-table :data="hotProducts" style="width: 100%" size="small">
                 <el-table-column prop="name" label="商品名称" />
-                <el-table-column prop="sales" label="销量" width="80" />
-                <el-table-column prop="price" label="价格" width="80">
+                <el-table-column prop="sales" label="销量" width="60" />
+                <el-table-column prop="price" label="价格" width="70">
                   <template #default="{ row }"> ¥{{ row.price }} </template>
                 </el-table-column>
-                <el-table-column prop="stock" label="库存" width="80">
+                <el-table-column prop="revenue" label="销售额" width="80">
+                  <template #default="{ row }"> ¥{{ formatNumber(row.revenue || 0) }} </template>
+                </el-table-column>
+                <el-table-column prop="stock" label="库存" width="60">
                   <template #default="{ row }">
-                    <span :class="{ 'low-stock': row.stock < 10 }">{{
-                      row.stock
-                    }}</span>
+                    <span :class="{ 'low-stock': row.stock < 10 }">{{ row.stock }}</span>
                   </template>
                 </el-table-column>
               </el-table>
@@ -159,8 +160,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue';
-import * as echarts from 'echarts';
+import { ref, reactive, onMounted, nextTick } from 'vue'
+import * as echarts from 'echarts'
+import request from '@/utils/request';
 import dayjs from 'dayjs';
 
 // 图表引用
@@ -172,58 +174,17 @@ const salesPeriod = ref('week');
 
 // 统计数据
 const stats = reactive({
-  totalUsers: 1234,
-  totalProducts: 567,
-  totalOrders: 890,
-  totalRevenue: 123456.78,
+  totalUsers: 0,
+  totalProducts: 0,
+  totalOrders: 0,
+  totalRevenue: 0,
 });
 
-// 最新订单
-const recentOrders = ref([
-  {
-    orderNo: 'ORD20240101001',
-    userName: '张三',
-    totalAmount: 128.5,
-    status: 1,
-    createTime: new Date(),
-  },
-  {
-    orderNo: 'ORD20240101002',
-    userName: '李四',
-    totalAmount: 89.9,
-    status: 2,
-    createTime: new Date(Date.now() - 3600000),
-  },
-  {
-    orderNo: 'ORD20240101003',
-    userName: '王五',
-    totalAmount: 256.0,
-    status: 3,
-    createTime: new Date(Date.now() - 7200000),
-  },
-]);
+// 最新订单数据
+const recentOrders = ref([]);
 
-// 热门商品
-const hotProducts = ref([
-  {
-    name: '新鲜苹果',
-    sales: 156,
-    price: 12.8,
-    stock: 89,
-  },
-  {
-    name: '有机蔬菜',
-    sales: 134,
-    price: 8.5,
-    stock: 5,
-  },
-  {
-    name: '优质牛肉',
-    sales: 98,
-    price: 45.6,
-    stock: 23,
-  },
-]);
+// 热门商品数据
+const hotProducts = ref([]);
 
 // 格式化数字
 const formatNumber = (num) => {
@@ -259,47 +220,180 @@ const getOrderStatusText = (status) => {
   return texts[status] || '未知';
 };
 
+// API调用函数
+const fetchDashboardStats = async () => {
+  try {
+    const response = await request.get('/admin/statistics/overview');
+    const data = response.data;
+    
+    Object.assign(stats, {
+      totalUsers: data.totalUsers || 0,
+      totalProducts: data.totalProducts || 0,
+      totalOrders: data.totalOrders || 0,
+      totalRevenue: data.totalRevenue || 0
+    });
+    
+    // 更新订单状态分布数据
+    if (data.orderStatusStats) {
+      orderStatusData.value = [
+        { value: data.orderStatusStats.pending || 0, name: '待支付', itemStyle: { color: '#F56C6C' } },
+        { value: data.orderStatusStats.paid || 0, name: '待发货', itemStyle: { color: '#E6A23C' } },
+        { value: data.orderStatusStats.shipped || 0, name: '已发货', itemStyle: { color: '#409EFF' } },
+        { value: data.orderStatusStats.completed || 0, name: '已完成', itemStyle: { color: '#67C23A' } },
+        { value: data.orderStatusStats.cancelled || 0, name: '已取消', itemStyle: { color: '#909399' } }
+      ];
+    }
+  } catch (error) {
+    console.error('获取统计数据失败:', error);
+    // 使用默认值
+    Object.assign(stats, {
+      totalUsers: 0,
+      totalProducts: 0,
+      totalOrders: 0,
+      totalRevenue: 0
+    });
+  }
+};
+
+const fetchSalesTrend = async () => {
+  try {
+    const response = await request.get('/admin/statistics/sales-trend', {
+      params: {
+        period: salesPeriod.value
+      }
+    });
+    const data = response.data;
+    
+    // 处理后端返回的salesData数组
+    if (data && data.salesData && Array.isArray(data.salesData)) {
+      const dates = data.salesData.map(item => item.date);
+      const orders = data.salesData.map(item => item.orders || 0);
+      const amounts = data.salesData.map(item => item.amount || 0);
+      
+      return { dates, orders, amounts };
+    }
+    
+    // 如果数据格式不正确，返回空数组
+    return {
+      dates: [],
+      orders: [],
+      amounts: []
+    };
+  } catch (error) {
+    console.error('获取销售趋势数据失败:', error);
+    // 返回空数据，不使用模拟数据
+    return {
+      dates: [],
+      orders: [],
+      amounts: []
+    };
+  }
+};
+
+const fetchRecentOrders = async () => {
+  try {
+    const response = await request.get('/admin/statistics/recent-orders', {
+      params: {
+        limit: 5
+      }
+    });
+    const data = response.data;
+    
+    recentOrders.value = data || [];
+  } catch (error) {
+    console.error('获取最新订单数据失败:', error);
+    // 不使用模拟数据，显示空列表
+    recentOrders.value = [];
+  }
+};
+
+const fetchHotProducts = async () => {
+  try {
+    const response = await request.get('/admin/statistics/hot-products', {
+      params: {
+        limit: 5
+      }
+    });
+    const data = response.data;
+    
+    hotProducts.value = data || [];
+  } catch (error) {
+    console.error('获取热门商品数据失败:', error);
+    // 不使用模拟数据，显示空列表
+    hotProducts.value = [];
+  }
+};
+
 // 加载销售趋势图
-const loadSalesChart = () => {
+const loadSalesChart = async () => {
+  const salesData = await fetchSalesTrend();
+  
   nextTick(() => {
     const chart = echarts.init(salesChartRef.value);
 
     const option = {
+      title: {
+        text: '销售趋势',
+        left: 'center',
+        textStyle: {
+          fontSize: 16,
+          fontWeight: 'bold'
+        }
+      },
       tooltip: {
         trigger: 'axis',
+        axisPointer: {
+          type: 'cross'
+        }
+      },
+      legend: {
+        data: ['订单数', '销售额'],
+        top: 30
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
       },
       xAxis: {
         type: 'category',
-        data:
-          salesPeriod.value === 'week'
-            ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-            : Array.from({ length: 30 }, (_, i) => `${i + 1}日`),
+        boundaryGap: false,
+        data: salesData.dates
       },
-      yAxis: {
-        type: 'value',
-      },
+      yAxis: [
+        {
+          type: 'value',
+          name: '订单数',
+          position: 'left'
+        },
+        {
+          type: 'value',
+          name: '销售额',
+          position: 'right'
+        }
+      ],
       series: [
         {
-          data:
-            salesPeriod.value === 'week'
-              ? [820, 932, 901, 934, 1290, 1330, 1320]
-              : Array.from(
-                  { length: 30 },
-                  () => Math.floor(Math.random() * 1000) + 500
-                ),
+          name: '订单数',
           type: 'line',
+          data: salesData.orders,
           smooth: true,
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(64, 158, 255, 0.3)' },
-              { offset: 1, color: 'rgba(64, 158, 255, 0.1)' },
-            ]),
-          },
-          lineStyle: {
-            color: '#409eff',
-          },
+          itemStyle: {
+            color: '#409EFF'
+          }
         },
-      ],
+        {
+          name: '销售额',
+          type: 'line',
+          yAxisIndex: 1,
+          data: salesData.amounts,
+          smooth: true,
+          itemStyle: {
+            color: '#67C23A'
+          }
+        }
+      ]
     };
 
     chart.setOption(option);
@@ -309,6 +403,21 @@ const loadSalesChart = () => {
       chart.resize();
     });
   });
+};
+
+// 订单状态分布数据
+const orderStatusData = ref([
+  { value: 0, name: '待支付', itemStyle: { color: '#F56C6C' } },
+  { value: 0, name: '待发货', itemStyle: { color: '#E6A23C' } },
+  { value: 0, name: '已发货', itemStyle: { color: '#409EFF' } },
+  { value: 0, name: '已完成', itemStyle: { color: '#67C23A' } },
+  { value: 0, name: '已取消', itemStyle: { color: '#909399' } }
+]);
+
+// 获取订单状态分布数据（已在fetchDashboardStats中处理）
+const fetchOrderStatusData = async () => {
+  // 订单状态数据已在fetchDashboardStats中获取和更新
+  // 这里不需要额外的API调用
 };
 
 // 加载订单状态分布图
@@ -317,29 +426,47 @@ const loadOrderChart = () => {
     const chart = echarts.init(orderChartRef.value);
 
     const option = {
+      title: {
+        text: '订单状态分布',
+        left: 'center',
+        textStyle: {
+          fontSize: 16,
+          fontWeight: 'bold'
+        }
+      },
       tooltip: {
         trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)'
+      },
+      legend: {
+        orient: 'vertical',
+        left: 'left',
+        top: 'middle'
       },
       series: [
         {
+          name: '订单状态',
           type: 'pie',
-          radius: '60%',
-          data: [
-            { value: 35, name: '待付款' },
-            { value: 25, name: '待发货' },
-            { value: 20, name: '已发货' },
-            { value: 15, name: '已完成' },
-            { value: 5, name: '已取消' },
-          ],
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: 'rgba(0, 0, 0, 0.5)',
-            },
+          radius: ['40%', '70%'],
+          center: ['60%', '50%'],
+          avoidLabelOverlap: false,
+          label: {
+            show: false,
+            position: 'center'
           },
-        },
-      ],
+          emphasis: {
+            label: {
+              show: true,
+              fontSize: '18',
+              fontWeight: 'bold'
+            }
+          },
+          labelLine: {
+            show: false
+          },
+          data: orderStatusData.value
+        }
+      ]
     };
 
     chart.setOption(option);
@@ -351,10 +478,29 @@ const loadOrderChart = () => {
   });
 };
 
-// 页面加载完成后初始化图表
-onMounted(() => {
-  loadSalesChart();
+// 监听销售周期变化
+const handlePeriodChange = async () => {
+  await loadSalesChart();
+};
+
+// 页面加载完成后初始化数据和图表
+onMounted(async () => {
+  // 并行加载所有数据
+  await Promise.all([
+    fetchDashboardStats(),
+    fetchRecentOrders(),
+    fetchHotProducts(),
+    fetchOrderStatusData()
+  ]);
+  
+  // 初始化图表
+  await loadSalesChart();
   loadOrderChart();
+});
+
+// 暴露给模板使用的方法
+defineExpose({
+  handlePeriodChange
 });
 </script>
 

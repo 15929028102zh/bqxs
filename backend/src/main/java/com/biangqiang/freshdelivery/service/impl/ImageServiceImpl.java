@@ -1,7 +1,7 @@
 package com.biangqiang.freshdelivery.service.impl;
 
 import com.biangqiang.freshdelivery.service.ImageService;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +13,7 @@ import java.util.*;
  * @author biangqiang
  * @since 2024-01-01
  */
-@Slf4j
+
 @Service
 public class ImageServiceImpl implements ImageService {
 
@@ -101,7 +101,7 @@ public class ImageServiceImpl implements ImageService {
     public void saveProductImages(Long productId, List<String> imageUrls) {
         if (productId != null && imageUrls != null) {
             productImages.put(productId, new ArrayList<>(imageUrls));
-            log.info("保存商品{}的图片: {}", productId, imageUrls);
+            // 保存商品图片
         }
     }
 
@@ -109,7 +109,7 @@ public class ImageServiceImpl implements ImageService {
     public void deleteProductImages(Long productId) {
         if (productId != null) {
             productImages.remove(productId);
-            log.info("删除商品{}的图片", productId);
+            // 删除商品图片
         }
     }
 
@@ -117,7 +117,7 @@ public class ImageServiceImpl implements ImageService {
     public void updateUserAvatar(Long userId, String avatarUrl) {
         if (userId != null && avatarUrl != null) {
             userAvatars.put(userId, avatarUrl);
-            log.info("更新用户{}的头像: {}", userId, avatarUrl);
+            // 更新用户头像
         }
     }
 
@@ -187,7 +187,6 @@ public class ImageServiceImpl implements ImageService {
         banner2.put("sort", 2);
         bannerImages.add(banner2);
         
-        log.info("图片服务初始化完成，加载了{}个商品图片组，{}个分类图片，{}个轮播图", 
-                productImages.size(), categoryImages.size(), bannerImages.size());
+        // 图片服务初始化完成
     }
 }

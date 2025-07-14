@@ -36,6 +36,7 @@ public class WebConfig implements WebMvcConfigurer {
                     "/admin/**",  // 排除管理员接口
                     "/user/login", "/user/phone-login", "/user/send-code", "/auth/**",  // 排除登录相关接口
                     "/product/**", "/category/**",  // 排除所有商品和分类相关接口
+                    "/api/product/**", "/api/category/**",  // 排除API路径下的商品和分类接口
                     "/image/**", "/upload/**",  // 排除图片和上传接口
                     "/cart/**", "/api/cart/**",  // 排除购物车相关接口（临时用于测试）
                     "/images/**", "/uploads/**", "/static/**",  // 排除静态资源

@@ -1,0 +1,697 @@
+# 边墙鲜送系统监控告警配置
+# 版本: 1.0.0
+# 描述: Prometheus AlertManager告警规则配置
+
+# ===========================================
+# 全局配置
+# ===========================================
+global:
+  # 告警解决超时时间
+  resolve_timeout: 5m
+  # SMTP配置
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@biangqiang.com'
+  smtp_auth_username: 'alerts@biangqiang.com'
+  smtp_auth_password: 'your-email-password'
+  smtp_require_tls: true
+
+# ===========================================
+# 告警路由配置
+# ===========================================
+route:
+  # 默认分组等待时间
+  group_wait: 10s
+  # 分组间隔时间
+  group_interval: 10s
+  # 重复告警间隔时间
+  repeat_interval: 1h
+  # 默认接收者
+  receiver: 'default'
+  # 分组标签
+  group_by: ['alertname', 'cluster', 'service']
+  
+  # 子路由配置
+  routes:
+    # 严重告警路由
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 5s
+      group_interval: 5s
+      repeat_interval: 30m
+    
+    # 警告告警路由
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      group_interval: 30s
+      repeat_interval: 2h
+    
+    # 数据库告警路由
+    - match:
+        service: mysql
+      receiver: 'database-alerts'
+      group_wait: 10s
+      repeat_interval: 1h
+    
+    # Redis告警路由
+    - match:
+        service: redis
+      receiver: 'cache-alerts'
+      group_wait: 10s
+      repeat_interval: 1h
+    
+    # 应用服务告警路由
+    - match:
+        service: backend
+      receiver: 'application-alerts'
+      group_wait: 15s
+      repeat_interval: 1h
+    
+    # 基础设施告警路由
+    - match:
+        category: infrastructure
+      receiver: 'infrastructure-alerts'
+      group_wait: 20s
+      repeat_interval: 2h
+
+# ===========================================
+# 告警抑制规则
+# ===========================================
+inhibit_rules:
+  # 当实例宕机时，抑制该实例的其他告警
+  - source_match:
+      severity: 'critical'
+      alertname: 'InstanceDown'
+    target_match:
+      severity: 'warning'
+    equal: ['instance']
+  
+  # 当服务不可用时，抑制该服务的性能告警
+  - source_match:
+      severity: 'critical'
+      category: 'availability'
+    target_match:
+      severity: 'warning'
+      category: 'performance'
+    equal: ['service']
+
+# ===========================================
+# 接收者配置
+# ===========================================
+receivers:
+  # 默认接收者
+  - name: 'default'
+    email_configs:
+      - to: 'admin@biangqiang.com'
+        subject: '[边墙鲜送] 系统告警通知'
+        body: |
+          告警详情:
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          告警级别: {{ .Labels.severity }}
+          服务名称: {{ .Labels.service }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        headers:
+          Subject: '[边墙鲜送] {{ .GroupLabels.alertname }} 告警通知'
+    
+    webhook_configs:
+      - url: 'https://oapi.dingtalk.com/robot/send?access_token=your-dingtalk-token'
+        send_resolved: true
+        title: '[边墙鲜送] 系统告警通知'
+        text: |
+          ## 系统告警通知
+          
+          **告警时间:** {{ .CommonAnnotations.timestamp }}
+          
+          {{ range .Alerts }}
+          **告警名称:** {{ .Annotations.summary }}
+          
+          **告警描述:** {{ .Annotations.description }}
+          
+          **告警级别:** {{ .Labels.severity }}
+          
+          **服务名称:** {{ .Labels.service }}
+          
+          **实例地址:** {{ .Labels.instance }}
+          
+          **开始时间:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          ---
+          {{ end }}
+  
+  # 严重告警接收者
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'admin@biangqiang.com,dev@biangqiang.com'
+        subject: '[紧急] 边墙鲜送系统严重告警'
+        body: |
+          🚨 严重告警通知 🚨
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          告警级别: {{ .Labels.severity }}
+          服务名称: {{ .Labels.service }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          请立即处理此告警！
+          {{ end }}
+        headers:
+          Priority: 'high'
+    
+    webhook_configs:
+      - url: 'https://oapi.dingtalk.com/robot/send?access_token=your-critical-dingtalk-token'
+        send_resolved: true
+        title: '🚨 [紧急] 边墙鲜送系统严重告警'
+        text: |
+          ## 🚨 严重告警通知
+          
+          {{ range .Alerts }}
+          **告警名称:** {{ .Annotations.summary }}
+          
+          **告警描述:** {{ .Annotations.description }}
+          
+          **告警级别:** <font color="#FF0000">{{ .Labels.severity }}</font>
+          
+          **服务名称:** {{ .Labels.service }}
+          
+          **实例地址:** {{ .Labels.instance }}
+          
+          **开始时间:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          **请立即处理此告警！**
+          
+          ---
+          {{ end }}
+  
+  # 警告告警接收者
+  - name: 'warning-alerts'
+    email_configs:
+      - to: 'dev@biangqiang.com'
+        subject: '[警告] 边墙鲜送系统告警'
+        body: |
+          ⚠️ 警告告警通知 ⚠️
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          告警级别: {{ .Labels.severity }}
+          服务名称: {{ .Labels.service }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+    
+    webhook_configs:
+      - url: 'https://oapi.dingtalk.com/robot/send?access_token=your-warning-dingtalk-token'
+        send_resolved: true
+        title: '⚠️ [警告] 边墙鲜送系统告警'
+        text: |
+          ## ⚠️ 警告告警通知
+          
+          {{ range .Alerts }}
+          **告警名称:** {{ .Annotations.summary }}
+          
+          **告警描述:** {{ .Annotations.description }}
+          
+          **告警级别:** <font color="#FFA500">{{ .Labels.severity }}</font>
+          
+          **服务名称:** {{ .Labels.service }}
+          
+          **实例地址:** {{ .Labels.instance }}
+          
+          **开始时间:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          ---
+          {{ end }}
+  
+  # 数据库告警接收者
+  - name: 'database-alerts'
+    email_configs:
+      - to: 'dba@biangqiang.com,dev@biangqiang.com'
+        subject: '[数据库] 边墙鲜送系统数据库告警'
+        body: |
+          🗄️ 数据库告警通知 🗄️
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          数据库类型: {{ .Labels.service }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          建议检查数据库连接、性能指标和日志。
+          {{ end }}
+  
+  # 缓存告警接收者
+  - name: 'cache-alerts'
+    email_configs:
+      - to: 'dev@biangqiang.com'
+        subject: '[缓存] 边墙鲜送系统缓存告警'
+        body: |
+          💾 缓存告警通知 💾
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          缓存类型: {{ .Labels.service }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          建议检查缓存连接、内存使用和性能指标。
+          {{ end }}
+  
+  # 应用服务告警接收者
+  - name: 'application-alerts'
+    email_configs:
+      - to: 'dev@biangqiang.com'
+        subject: '[应用] 边墙鲜送系统应用告警'
+        body: |
+          🚀 应用告警通知 🚀
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          应用服务: {{ .Labels.service }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          建议检查应用日志、性能指标和健康状态。
+          {{ end }}
+  
+  # 基础设施告警接收者
+  - name: 'infrastructure-alerts'
+    email_configs:
+      - to: 'ops@biangqiang.com,admin@biangqiang.com'
+        subject: '[基础设施] 边墙鲜送系统基础设施告警'
+        body: |
+          🏗️ 基础设施告警通知 🏗️
+          
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          告警级别: {{ .Labels.severity }}
+          实例地址: {{ .Labels.instance }}
+          开始时间: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          建议检查服务器资源、网络连接和系统状态。
+          {{ end }}
+
+---
+
+# Prometheus告警规则配置
+# 文件名: prometheus-rules.yml
+
+groups:
+  # ===========================================
+  # 系统资源告警规则
+  # ===========================================
+  - name: system-resources
+    rules:
+      # CPU使用率告警
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          service: system
+        annotations:
+          summary: "实例 {{ $labels.instance }} CPU使用率过高"
+          description: "实例 {{ $labels.instance }} CPU使用率为 {{ $value }}%，超过80%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 内存使用率告警
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          service: system
+        annotations:
+          summary: "实例 {{ $labels.instance }} 内存使用率过高"
+          description: "实例 {{ $labels.instance }} 内存使用率为 {{ $value }}%，超过85%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 磁盘使用率告警
+      - alert: HighDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          category: infrastructure
+          service: system
+        annotations:
+          summary: "实例 {{ $labels.instance }} 磁盘使用率过高"
+          description: "实例 {{ $labels.instance }} 磁盘 {{ $labels.mountpoint }} 使用率为 {{ $value }}%，超过90%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 磁盘IO等待时间告警
+      - alert: HighDiskIOWait
+        expr: irate(node_cpu_seconds_total{mode="iowait"}[5m]) * 100 > 20
+        for: 10m
+        labels:
+          severity: warning
+          category: infrastructure
+          service: system
+        annotations:
+          summary: "实例 {{ $labels.instance }} 磁盘IO等待时间过高"
+          description: "实例 {{ $labels.instance }} 磁盘IO等待时间为 {{ $value }}%，超过20%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+  
+  # ===========================================
+  # 服务可用性告警规则
+  # ===========================================
+  - name: service-availability
+    rules:
+      # 实例宕机告警
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "实例 {{ $labels.instance }} 已宕机"
+          description: "实例 {{ $labels.instance }} 已经宕机超过1分钟"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 服务健康检查失败告警
+      - alert: ServiceHealthCheckFailed
+        expr: probe_success == 0
+        for: 3m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "服务 {{ $labels.instance }} 健康检查失败"
+          description: "服务 {{ $labels.instance }} 健康检查已失败超过3分钟"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # HTTP响应时间过长告警
+      - alert: HighHTTPResponseTime
+        expr: probe_duration_seconds > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "HTTP响应时间过长"
+          description: "{{ $labels.instance }} HTTP响应时间为 {{ $value }}秒，超过5秒阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+  
+  # ===========================================
+  # 应用服务告警规则
+  # ===========================================
+  - name: application-services
+    rules:
+      # 应用错误率告警
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: backend
+        annotations:
+          summary: "应用错误率过高"
+          description: "应用 {{ $labels.instance }} 错误率为 {{ $value }}%，超过5%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 应用响应时间告警
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: backend
+        annotations:
+          summary: "应用响应时间过长"
+          description: "应用 {{ $labels.instance }} 95%响应时间为 {{ $value }}秒，超过2秒阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # JVM堆内存使用率告警
+      - alert: HighJVMHeapUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: backend
+        annotations:
+          summary: "JVM堆内存使用率过高"
+          description: "应用 {{ $labels.instance }} JVM堆内存使用率为 {{ $value }}%，超过85%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # GC时间过长告警
+      - alert: HighGCTime
+        expr: rate(jvm_gc_collection_seconds_sum[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: backend
+        annotations:
+          summary: "GC时间过长"
+          description: "应用 {{ $labels.instance }} GC时间为 {{ $value }}秒/秒，超过0.1阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+  
+  # ===========================================
+  # 数据库告警规则
+  # ===========================================
+  - name: database-mysql
+    rules:
+      # MySQL连接数告警
+      - alert: MySQLHighConnections
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: mysql
+        annotations:
+          summary: "MySQL连接数过高"
+          description: "MySQL实例 {{ $labels.instance }} 连接数使用率为 {{ $value }}%，超过80%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # MySQL慢查询告警
+      - alert: MySQLHighSlowQueries
+        expr: rate(mysql_global_status_slow_queries[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: mysql
+        annotations:
+          summary: "MySQL慢查询过多"
+          description: "MySQL实例 {{ $labels.instance }} 慢查询速率为 {{ $value }}次/秒，超过10次/秒阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # MySQL复制延迟告警
+      - alert: MySQLReplicationLag
+        expr: mysql_slave_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: mysql
+        annotations:
+          summary: "MySQL复制延迟过高"
+          description: "MySQL从库 {{ $labels.instance }} 复制延迟为 {{ $value }}秒，超过30秒阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # MySQL不可用告警
+      - alert: MySQLDown
+        expr: mysql_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+          service: mysql
+        annotations:
+          summary: "MySQL服务不可用"
+          description: "MySQL实例 {{ $labels.instance }} 已不可用超过1分钟"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+  
+  # ===========================================
+  # Redis告警规则
+  # ===========================================
+  - name: cache-redis
+    rules:
+      # Redis内存使用率告警
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: redis
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "Redis实例 {{ $labels.instance }} 内存使用率为 {{ $value }}%，超过90%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # Redis连接数告警
+      - alert: RedisHighConnections
+        expr: redis_connected_clients > 1000
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: redis
+        annotations:
+          summary: "Redis连接数过高"
+          description: "Redis实例 {{ $labels.instance }} 连接数为 {{ $value }}，超过1000阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # Redis键过期速率告警
+      - alert: RedisHighKeyEvictionRate
+        expr: rate(redis_evicted_keys_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: redis
+        annotations:
+          summary: "Redis键过期速率过高"
+          description: "Redis实例 {{ $labels.instance }} 键过期速率为 {{ $value }}键/秒，超过100键/秒阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # Redis不可用告警
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+          service: redis
+        annotations:
+          summary: "Redis服务不可用"
+          description: "Redis实例 {{ $labels.instance }} 已不可用超过1分钟"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+  
+  # ===========================================
+  # 网络告警规则
+  # ===========================================
+  - name: network
+    rules:
+      # 网络接收错误告警
+      - alert: HighNetworkReceiveErrors
+        expr: rate(node_network_receive_errs_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          service: network
+        annotations:
+          summary: "网络接收错误率过高"
+          description: "实例 {{ $labels.instance }} 网络接口 {{ $labels.device }} 接收错误率为 {{ $value }}错误/秒"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 网络发送错误告警
+      - alert: HighNetworkTransmitErrors
+        expr: rate(node_network_transmit_errs_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          service: network
+        annotations:
+          summary: "网络发送错误率过高"
+          description: "实例 {{ $labels.instance }} 网络接口 {{ $labels.device }} 发送错误率为 {{ $value }}错误/秒"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+  
+  # ===========================================
+  # 容器告警规则
+  # ===========================================
+  - name: containers
+    rules:
+      # 容器CPU使用率告警
+      - alert: ContainerHighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: container
+        annotations:
+          summary: "容器CPU使用率过高"
+          description: "容器 {{ $labels.name }} CPU使用率为 {{ $value }}%，超过80%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 容器内存使用率告警
+      - alert: ContainerHighMemoryUsage
+        expr: container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""} * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+          service: container
+        annotations:
+          summary: "容器内存使用率过高"
+          description: "容器 {{ $labels.name }} 内存使用率为 {{ $value }}%，超过90%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 容器重启告警
+      - alert: ContainerRestarted
+        expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+        for: 0m
+        labels:
+          severity: warning
+          category: availability
+          service: container
+        annotations:
+          summary: "容器频繁重启"
+          description: "容器 {{ $labels.container }} 在过去1小时内重启了 {{ $value }} 次"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+  
+  # ===========================================
+  # 业务指标告警规则
+  # ===========================================
+  - name: business-metrics
+    rules:
+      # 订单处理失败率告警
+      - alert: HighOrderFailureRate
+        expr: rate(order_processing_failed_total[5m]) / rate(order_processing_total[5m]) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: business
+          service: backend
+        annotations:
+          summary: "订单处理失败率过高"
+          description: "订单处理失败率为 {{ $value }}%，超过5%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 支付失败率告警
+      - alert: HighPaymentFailureRate
+        expr: rate(payment_failed_total[5m]) / rate(payment_total[5m]) * 100 > 3
+        for: 5m
+        labels:
+          severity: critical
+          category: business
+          service: backend
+        annotations:
+          summary: "支付失败率过高"
+          description: "支付失败率为 {{ $value }}%，超过3%阈值"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"
+      
+      # 用户登录失败率告警
+      - alert: HighLoginFailureRate
+        expr: rate(user_login_failed_total[5m]) / rate(user_login_total[5m]) * 100 > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: business
+          service: backend
+        annotations:
+          summary: "用户登录失败率过高"
+          description: "用户登录失败率为 {{ $value }}%，超过10%阈值，可能存在安全问题"
+          timestamp: "{{ .ActiveAt.Format \"2006-01-02 15:04:05\" }}"

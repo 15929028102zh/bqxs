@@ -218,11 +218,8 @@ Page({
 
   // 联系客服
   contactService() {
-    wx.makePhoneCall({
-      phoneNumber: '400-123-4567',
-      fail: () => {
-        app.showToast('拨打失败');
-      }
+    wx.navigateTo({
+      url: '/pages/ai-chat/ai-chat'
     });
   }
 });

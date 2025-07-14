@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#f0f8f0"/>
+  <circle cx="200" cy="200" r="150" fill="#90EE90" stroke="#228B22" stroke-width="3"/>
+  <path d="M120 180 Q200 120 280 180 Q200 240 120 180" fill="#32CD32"/>
+  <path d="M140 200 Q200 140 260 200 Q200 260 140 200" fill="#98FB98"/>
+  <text x="200" y="320" text-anchor="middle" font-family="Arial" font-size="24" fill="#228B22">白菜</text>
+</svg>

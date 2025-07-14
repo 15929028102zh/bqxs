@@ -101,4 +101,37 @@ public interface UserService {
      * @return 是否成功
      */
     Boolean deleteUserForAdmin(Long userId);
+    
+    // 统计相关方法
+    
+    /**
+     * 获取用户总数
+     *
+     * @return 用户总数
+     */
+    Long getTotalUserCount();
+    
+    /**
+     * 获取今日新增用户数
+     *
+     * @param date 日期
+     * @return 今日新增用户数
+     */
+    Long getTodayUserCount(java.time.LocalDate date);
+    
+    /**
+     * 根据日期获取新增用户数
+     *
+     * @param date 日期
+     * @return 新增用户数
+     */
+    Long getNewUserCountByDate(java.time.LocalDate date);
+    
+    /**
+     * 根据日期获取累计用户数
+     *
+     * @param date 日期
+     * @return 累计用户数
+     */
+    Long getTotalUserCountByDate(java.time.LocalDate date);
 }

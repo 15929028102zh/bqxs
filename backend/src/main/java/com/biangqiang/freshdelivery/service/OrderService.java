@@ -118,4 +118,89 @@ public interface OrderService extends IService<Order> {
      * @return 用户订单列表
      */
     IPage<Order> getUserOrderList(Long userId, Integer status, Integer page, Integer size);
+
+    // 统计相关方法
+    
+    /**
+     * 获取总收入
+     *
+     * @return 总收入
+     */
+    BigDecimal getTotalRevenue();
+
+    /**
+     * 获取今日订单数
+     *
+     * @param date 日期
+     * @return 今日订单数
+     */
+    Long getTodayOrderCount(java.time.LocalDate date);
+
+    /**
+     * 获取今日收入
+     *
+     * @param date 日期
+     * @return 今日收入
+     */
+    BigDecimal getTodayRevenue(java.time.LocalDate date);
+
+    /**
+     * 根据状态获取订单数量
+     *
+     * @param status 订单状态
+     * @return 订单数量
+     */
+    Long getOrderCountByStatus(Integer status);
+
+    /**
+     * 根据日期获取订单数量
+     *
+     * @param date 日期
+     * @return 订单数量
+     */
+    Long getOrderCountByDate(java.time.LocalDate date);
+
+    /**
+     * 根据日期获取收入
+     *
+     * @param date 日期
+     * @return 收入
+     */
+    BigDecimal getRevenueByDate(java.time.LocalDate date);
+
+    /**
+     * 获取最新订单
+     *
+     * @param limit 数量限制
+     * @return 最新订单列表
+     */
+    List<Map<String, Object>> getRecentOrders(Integer limit);
+
+    /**
+     * 获取销售报表
+     *
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @param type 类型
+     * @return 销售报表数据
+     */
+    List<Map<String, Object>> getSalesReport(java.time.LocalDate startDate, java.time.LocalDate endDate, String type);
+
+    /**
+     * 根据日期范围获取总金额
+     *
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 总金额
+     */
+    BigDecimal getTotalAmountByDateRange(java.time.LocalDate startDate, java.time.LocalDate endDate);
+
+    /**
+     * 根据日期范围获取总订单数
+     *
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 总订单数
+     */
+    Long getTotalOrdersByDateRange(java.time.LocalDate startDate, java.time.LocalDate endDate);
 }

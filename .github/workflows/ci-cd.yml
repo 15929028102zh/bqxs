@@ -1,0 +1,445 @@
+name: 边墙鲜送系统 CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PROJECT_NAME: biangqiang-fresh-delivery
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  # 代码质量检查
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout代码
+      uses: actions/checkout@v4
+      
+    - name: 设置Java环境
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: 设置Node.js环境
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: admin-frontend/package-lock.json
+        
+    - name: 缓存Maven依赖
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 后端代码检查
+      run: |
+        cd backend
+        mvn clean compile
+        mvn checkstyle:check
+        mvn spotbugs:check
+        
+    - name: 前端代码检查
+      run: |
+        cd admin-frontend
+        npm ci
+        npm run lint
+        npm run type-check
+
+  # 单元测试
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test_password
+          MYSQL_DATABASE: fresh_delivery_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+          
+      redis:
+        image: redis:6.2-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+    - name: Checkout代码
+      uses: actions/checkout@v4
+      
+    - name: 设置Java环境
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: 缓存Maven依赖
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 运行后端单元测试
+      run: |
+        cd backend
+        mvn test
+      env:
+        SPRING_PROFILES_ACTIVE: test
+        MYSQL_HOST: localhost
+        MYSQL_PORT: 3306
+        MYSQL_DATABASE: fresh_delivery_test
+        MYSQL_USERNAME: root
+        MYSQL_PASSWORD: test_password
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+        
+    - name: 生成测试报告
+      uses: dorny/test-reporter@v1
+      if: success() || failure()
+      with:
+        name: 后端单元测试报告
+        path: backend/target/surefire-reports/*.xml
+        reporter: java-junit
+        
+    - name: 上传代码覆盖率报告
+      uses: codecov/codecov-action@v3
+      with:
+        file: backend/target/site/jacoco/jacoco.xml
+        flags: backend
+        name: backend-coverage
+
+  # 安全扫描
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout代码
+      uses: actions/checkout@v4
+      
+    - name: 运行Trivy漏洞扫描
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: 上传安全扫描结果
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+        
+    - name: OWASP依赖检查
+      uses: dependency-check/Dependency-Check_Action@main
+      with:
+        project: 'fresh-delivery'
+        path: '.'
+        format: 'HTML'
+        
+    - name: 上传依赖检查报告
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-check-report
+        path: reports/
+
+  # 构建Docker镜像
+  build-images:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, security-scan]
+    
+    outputs:
+      backend-image: ${{ steps.meta-backend.outputs.tags }}
+      frontend-image: ${{ steps.meta-frontend.outputs.tags }}
+    
+    steps:
+    - name: Checkout代码
+      uses: actions/checkout@v4
+      
+    - name: 设置Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: 登录Docker Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 提取后端镜像元数据
+      id: meta-backend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository }}/backend
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: 构建并推送后端镜像
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        push: true
+        tags: ${{ steps.meta-backend.outputs.tags }}
+        labels: ${{ steps.meta-backend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: 提取前端镜像元数据
+      id: meta-frontend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository }}/admin-frontend
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: 构建并推送前端镜像
+      uses: docker/build-push-action@v5
+      with:
+        context: ./admin-frontend
+        push: true
+        tags: ${{ steps.meta-frontend.outputs.tags }}
+        labels: ${{ steps.meta-frontend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # 部署到测试环境
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.ref == 'refs/heads/develop'
+    
+    environment:
+      name: staging
+      url: https://staging.biangqiang.com
+    
+    steps:
+    - name: Checkout代码
+      uses: actions/checkout@v4
+      
+    - name: 部署到测试环境
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          cd /opt/fresh-delivery/staging
+          
+          # 更新镜像标签
+          sed -i 's|image: .*backend.*|image: ${{ needs.build-images.outputs.backend-image }}|g' docker-compose.yml
+          sed -i 's|image: .*admin-frontend.*|image: ${{ needs.build-images.outputs.frontend-image }}|g' docker-compose.yml
+          
+          # 拉取最新镜像
+          docker-compose pull
+          
+          # 重启服务
+          docker-compose up -d
+          
+          # 健康检查
+          sleep 30
+          curl -f http://localhost:8080/api/health || exit 1
+          
+          echo "测试环境部署成功！"
+
+  # 集成测试
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout代码
+      uses: actions/checkout@v4
+      
+    - name: 设置Node.js环境
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: 安装测试依赖
+      run: |
+        cd tests
+        npm install
+        
+    - name: 运行集成测试
+      run: |
+        cd tests
+        npm run test:integration
+      env:
+        TEST_BASE_URL: https://staging.biangqiang.com
+        
+    - name: 上传测试报告
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-report
+        path: tests/reports/
+
+  # 部署到生产环境
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build-images, integration-tests]
+    if: github.ref == 'refs/heads/main'
+    
+    environment:
+      name: production
+      url: https://api.biangqiang.com
+    
+    steps:
+    - name: Checkout代码
+      uses: actions/checkout@v4
+      
+    - name: 部署到生产环境
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/fresh-delivery/production
+          
+          # 备份当前配置
+          cp docker-compose.prod.yml docker-compose.prod.yml.backup.$(date +%Y%m%d_%H%M%S)
+          
+          # 更新镜像标签
+          sed -i 's|image: .*backend.*|image: ${{ needs.build-images.outputs.backend-image }}|g' docker-compose.prod.yml
+          sed -i 's|image: .*admin-frontend.*|image: ${{ needs.build-images.outputs.frontend-image }}|g' docker-compose.prod.yml
+          
+          # 拉取最新镜像
+          docker-compose -f docker-compose.prod.yml pull
+          
+          # 滚动更新
+          docker-compose -f docker-compose.prod.yml up -d --no-deps backend
+          sleep 30
+          
+          # 健康检查
+          if curl -f https://api.biangqiang.com/api/health; then
+            echo "后端服务更新成功"
+            
+            # 更新前端
+            docker-compose -f docker-compose.prod.yml up -d --no-deps admin-frontend
+            sleep 10
+            
+            if curl -f https://api.biangqiang.com; then
+              echo "生产环境部署成功！"
+              
+              # 清理旧镜像
+              docker system prune -f
+            else
+              echo "前端部署失败，回滚"
+              docker-compose -f docker-compose.prod.yml.backup.$(date +%Y%m%d_%H%M%S) up -d
+              exit 1
+            fi
+          else
+            echo "后端部署失败，回滚"
+            docker-compose -f docker-compose.prod.yml.backup.$(date +%Y%m%d_%H%M%S) up -d
+            exit 1
+          fi
+
+  # 通知
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+    - name: 发送钉钉通知
+      if: always()
+      uses: zcong1993/actions-dingtalk@master
+      with:
+        dingToken: ${{ secrets.DINGTALK_WEBHOOK_TOKEN }}
+        body: |
+          {
+            "msgtype": "markdown",
+            "markdown": {
+              "title": "边墙鲜送系统部署通知",
+              "text": "## 🚀 边墙鲜送系统部署通知\n\n**项目**: ${{ env.PROJECT_NAME }}\n**分支**: ${{ github.ref_name }}\n**提交**: ${{ github.sha }}\n**状态**: ${{ job.status }}\n**触发者**: ${{ github.actor }}\n\n[查看详情](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            }
+          }
+          
+    - name: 发送邮件通知
+      if: failure()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "[失败] 边墙鲜送系统部署失败 - ${{ github.ref_name }}"
+        body: |
+          边墙鲜送系统部署失败
+          
+          项目: ${{ env.PROJECT_NAME }}
+          分支: ${{ github.ref_name }}
+          提交: ${{ github.sha }}
+          触发者: ${{ github.actor }}
+          
+          查看详情: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        to: admin@biangqiang.com
+        from: noreply@biangqiang.com
+
+  # 性能测试 (可选)
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout代码
+      uses: actions/checkout@v4
+      
+    - name: 运行性能测试
+      run: |
+        # 使用Apache Bench进行简单性能测试
+        sudo apt-get update
+        sudo apt-get install apache2-utils
+        
+        # 测试API性能
+        ab -n 1000 -c 10 https://staging.biangqiang.com/api/health
+        
+        # 测试页面加载性能
+        ab -n 100 -c 5 https://staging.biangqiang.com/
+        
+    - name: 上传性能测试报告
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-test-report
+        path: performance-results.txt
+
+  # 清理
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+    - name: 清理旧的Docker镜像
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          # 清理超过7天的镜像
+          docker image prune -a --filter "until=168h" -f
+          
+          # 清理无用的容器和网络
+          docker system prune -f

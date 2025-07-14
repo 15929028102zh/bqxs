@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#f0f8f0"/>
+  <ellipse cx="200" cy="200" rx="120" ry="160" fill="#006400" stroke="#228B22" stroke-width="3"/>
+  <path d="M150 150 Q200 100 250 150 L240 200 Q200 180 160 200 Z" fill="#32CD32"/>
+  <path d="M160 200 Q200 160 240 200 L230 250 Q200 230 170 250 Z" fill="#228B22"/>
+  <path d="M170 250 Q200 210 230 250 L220 300 Q200 280 180 300 Z" fill="#006400"/>
+  <text x="200" y="350" text-anchor="middle" font-family="Arial" font-size="24" fill="#006400">菠菜</text>
+</svg>

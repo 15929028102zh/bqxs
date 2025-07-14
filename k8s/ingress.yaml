@@ -1,0 +1,223 @@
+# 生产环境Ingress配置
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fresh-delivery-ingress
+  namespace: fresh-delivery
+  annotations:
+    # 使用nginx-ingress控制器
+    kubernetes.io/ingress.class: "nginx"
+    # 启用SSL重定向
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # 证书管理器
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # 限流配置
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    # CORS配置
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://admin.biangqiang.com"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    # 请求体大小限制
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    # 超时设置
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    # 缓存配置
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+      }
+spec:
+  tls:
+  - hosts:
+    - api.biangqiang.com
+    - admin.biangqiang.com
+    secretName: biangqiang-tls
+  rules:
+  # API服务
+  - host: api.biangqiang.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: admin-frontend-service
+            port:
+              number: 80
+  # 管理后台
+  - host: admin.biangqiang.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: admin-frontend-service
+            port:
+              number: 80
+---
+# 测试环境Ingress配置
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fresh-delivery-ingress
+  namespace: fresh-delivery-staging
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    nginx.ingress.kubernetes.io/rate-limit: "50"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  tls:
+  - hosts:
+    - staging.biangqiang.com
+    secretName: biangqiang-staging-tls
+  rules:
+  - host: staging.biangqiang.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: admin-frontend-service
+            port:
+              number: 80
+---
+# ClusterIssuer for Let's Encrypt (生产环境)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@biangqiang.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+---
+# ClusterIssuer for Let's Encrypt (测试环境)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: admin@biangqiang.com
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+---
+# NetworkPolicy - 网络安全策略
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fresh-delivery-network-policy
+  namespace: fresh-delivery
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # 允许来自nginx-ingress的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  # 允许同命名空间内的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: fresh-delivery
+  # 允许来自监控系统的流量
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 9090
+  egress:
+  # 允许DNS查询
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # 允许HTTPS出站流量
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  # 允许HTTP出站流量
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+  # 允许访问数据库
+  - to:
+    - podSelector:
+        matchLabels:
+          app: mysql
+    ports:
+    - protocol: TCP
+      port: 3306
+  # 允许访问Redis
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+---
+# 测试环境网络策略
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fresh-delivery-network-policy
+  namespace: fresh-delivery-staging
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # 测试环境允许所有入站流量
+  - {}
+  egress:
+  # 测试环境允许所有出站流量
+  - {}

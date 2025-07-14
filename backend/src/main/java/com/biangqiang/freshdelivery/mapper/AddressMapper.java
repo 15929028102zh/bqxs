@@ -48,6 +48,6 @@ public interface AddressMapper extends BaseMapper<Address> {
      * @param id 地址ID
      * @return 更新行数
      */
-    @Update("UPDATE tb_user_address SET is_default = 1 WHERE id = #{id}")
+    @Update("UPDATE `address` SET is_default = 1 WHERE id = #{id}")
     int setDefault(@Param("id") Long id);
 }

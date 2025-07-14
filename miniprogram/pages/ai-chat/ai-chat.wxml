@@ -1,0 +1,97 @@
+<!--pages/ai-chat/ai-chat.wxml-->
+<view class="chat-container">
+  <!-- 聊天头部 -->
+  <view class="chat-header">
+    <view class="header-content">
+      <image class="ai-avatar" src="/images/ai-avatar.png" mode="aspectFill"></image>
+      <view class="ai-info">
+        <text class="ai-name">智能客服</text>
+        <text class="ai-status">在线为您服务</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 聊天消息列表 -->
+  <scroll-view class="chat-messages" 
+               scroll-y="true" 
+               scroll-top="{{scrollTop}}"
+               scroll-into-view="{{scrollIntoView}}">
+    <view class="message-list">
+      <view class="message-item {{item.type}}" 
+            wx:for="{{messages}}" 
+            wx:key="id"
+            id="msg-{{item.id}}">
+        <view class="message-avatar">
+          <image src="{{item.type === 'user' ? userAvatar : aiAvatar}}" mode="aspectFill"></image>
+        </view>
+        <view class="message-content">
+          <view class="message-bubble">
+            <text class="message-text">{{item.content}}</text>
+            <!-- AI消息的功能链接 -->
+            <view class="message-links" wx:if="{{item.type === 'ai' && item.links && item.links.length > 0}}">
+              <text class="link-text">{{item.linkText}}</text>
+              <view class="link-buttons">
+                <button class="link-btn" 
+                        wx:for="{{item.links}}" 
+                        wx:for-item="link"
+                        wx:key="path"
+                        bindtap="navigateToPage"
+                        data-path="{{link.path}}"
+                        data-type="{{link.type}}">
+                  {{link.text}}
+                </button>
+              </view>
+            </view>
+          </view>
+          <view class="message-time">{{item.time}}</view>
+        </view>
+      </view>
+      
+      <!-- AI正在输入提示 -->
+      <view class="message-item ai typing" wx:if="{{isTyping}}">
+        <view class="message-avatar">
+          <image src="{{aiAvatar}}" mode="aspectFill"></image>
+        </view>
+        <view class="message-content">
+          <view class="message-bubble">
+            <view class="typing-indicator">
+              <view class="dot"></view>
+              <view class="dot"></view>
+              <view class="dot"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 输入区域 -->
+  <view class="chat-input">
+    <view class="input-container">
+      <input class="input-field" 
+             type="text" 
+             placeholder="请输入您的问题..."
+             value="{{inputText}}"
+             bindinput="onInputChange"
+             bindconfirm="sendMessage"
+             confirm-type="send"
+             disabled="{{isTyping}}"/>
+      <button class="send-btn" 
+              bindtap="sendMessage"
+              disabled="{{!inputText.trim() || isTyping}}">
+        发送
+      </button>
+    </view>
+  </view>
+
+  <!-- 快捷回复 -->
+  <view class="quick-replies" wx:if="{{quickReplies.length > 0}}">
+    <view class="quick-reply-item" 
+          wx:for="{{quickReplies}}" 
+          wx:key="*this"
+          bindtap="sendQuickReply"
+          data-text="{{item}}">
+      {{item}}
+    </view>
+  </view>
+</view>

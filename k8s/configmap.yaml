@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fresh-delivery-config
+  namespace: fresh-delivery
+data:
+  # 应用配置
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8080"
+  
+  # 数据库配置
+  MYSQL_HOST: "mysql-service"
+  MYSQL_PORT: "3306"
+  MYSQL_DATABASE: "fresh_delivery"
+  
+  # Redis配置
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  REDIS_DATABASE: "0"
+  
+  # 文件上传配置
+  FILE_UPLOAD_PATH: "/app/uploads"
+  FILE_MAX_SIZE: "10MB"
+  
+  # 日志配置
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_COM_BIANGQIANG: "DEBUG"
+  
+  # 微信小程序配置
+  WECHAT_APPID: "your-wechat-appid"
+  
+  # 支付配置
+  PAYMENT_TIMEOUT: "300"
+  
+  # 缓存配置
+  CACHE_TTL: "3600"
+  
+  # 邮件配置
+  MAIL_HOST: "smtp.gmail.com"
+  MAIL_PORT: "587"
+  MAIL_FROM: "noreply@biangqiang.com"
+  
+  # 短信配置
+  SMS_PROVIDER: "aliyun"
+  
+  # OSS配置
+  OSS_ENDPOINT: "oss-cn-hangzhou.aliyuncs.com"
+  OSS_BUCKET: "biangqiang-fresh"
+  
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fresh-delivery-config
+  namespace: fresh-delivery-staging
+data:
+  # 应用配置
+  SPRING_PROFILES_ACTIVE: "staging"
+  SERVER_PORT: "8080"
+  
+  # 数据库配置
+  MYSQL_HOST: "mysql-service"
+  MYSQL_PORT: "3306"
+  MYSQL_DATABASE: "fresh_delivery_staging"
+  
+  # Redis配置
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  REDIS_DATABASE: "1"
+  
+  # 文件上传配置
+  FILE_UPLOAD_PATH: "/app/uploads"
+  FILE_MAX_SIZE: "10MB"
+  
+  # 日志配置
+  LOGGING_LEVEL_ROOT: "DEBUG"
+  LOGGING_LEVEL_COM_BIANGQIANG: "TRACE"
+  
+  # 微信小程序配置
+  WECHAT_APPID: "your-wechat-test-appid"
+  
+  # 支付配置
+  PAYMENT_TIMEOUT: "300"
+  
+  # 缓存配置
+  CACHE_TTL: "1800"
+  
+  # 邮件配置
+  MAIL_HOST: "smtp.gmail.com"
+  MAIL_PORT: "587"
+  MAIL_FROM: "staging@biangqiang.com"
+  
+  # 短信配置
+  SMS_PROVIDER: "aliyun"
+  
+  # OSS配置
+  OSS_ENDPOINT: "oss-cn-hangzhou.aliyuncs.com"
+  OSS_BUCKET: "biangqiang-fresh-staging"

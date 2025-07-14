@@ -358,6 +358,52 @@ test_build() {
     log "SUCCESS" "✓ 所有镜像构建测试通过"
 }
 
+# 修复前端ESLint错误
+fix_frontend_eslint() {
+    log "INFO" "修复前端ESLint错误..."
+    
+    if [ ! -d "admin-frontend" ]; then
+        error_exit "admin-frontend目录不存在"
+    fi
+    
+    cd admin-frontend
+    
+    # 检查settings文件是否存在
+    local settings_file="src/views/settings/index.vue"
+    if [ ! -f "$settings_file" ]; then
+        log "WARN" "未找到settings文件: $settings_file"
+        cd ..
+        return 0
+    fi
+    
+    log "INFO" "修复settings/index.vue中的ESLint错误..."
+    
+    # 备份原文件
+    backup_file "$settings_file"
+    
+    # 修复未使用的变量和console语句
+    sed -i 's/^const uploadUrl = ref.*$/\/\/ uploadUrl变量已移除 - 未使用/' "$settings_file"
+    sed -i 's/console\.log(/\/\/ console.log(/g' "$settings_file"
+    sed -i 's/console\.error(/\/\/ console.error(/g' "$settings_file"
+    
+    # 运行ESLint检查
+    if command -v npm >/dev/null 2>&1; then
+        log "INFO" "运行ESLint检查..."
+        npm run lint --if-present
+        
+        log "INFO" "测试构建..."
+        if npm run build; then
+            log "SUCCESS" "✓ 前端ESLint错误已修复，构建成功"
+        else
+            log "WARN" "构建仍有问题，请手动检查"
+        fi
+    else
+        log "WARN" "npm未安装，跳过ESLint检查"
+    fi
+    
+    cd ..
+}
+
 # 显示帮助信息
 show_help() {
     cat << EOF
@@ -368,6 +414,7 @@ show_help() {
 命令:
   fix-all          修复所有已知问题（默认）
   fix-frontend     仅修复前端Dockerfile问题
+  fix-eslint       仅修复前端ESLint错误
   fix-backend      仅修复后端路径问题
   fix-config       仅修复配置文件引号问题
   optimize-backend 优化后端Dockerfile（多阶段构建）
@@ -384,7 +431,8 @@ show_help() {
 
 示例:
   $0                    # 修复所有问题
-  $0 fix-frontend       # 仅修复前端问题
+  $0 fix-frontend       # 仅修复前端Dockerfile问题
+  $0 fix-eslint         # 仅修复前端ESLint错误
   $0 --dry-run          # 预览修复操作
   $0 test-build         # 测试构建
 
@@ -413,7 +461,7 @@ main() {
                 verbose=true
                 shift
                 ;;
-            fix-all|fix-frontend|fix-backend|fix-config|optimize-backend|check-docker|clean-cache|verify|test-build|help)
+            fix-all|fix-frontend|fix-eslint|fix-backend|fix-config|optimize-backend|check-docker|clean-cache|verify|test-build|help)
                 command=$1
                 shift
                 ;;
@@ -439,6 +487,7 @@ main() {
             if [ "$dry_run" = false ]; then
                 check_docker_environment
                 fix_frontend_dockerfile
+                fix_frontend_eslint
                 fix_deploy_script_backend_path
                 optimize_backend_dockerfile
                 fix_config_quotes
@@ -448,9 +497,10 @@ main() {
             else
                 log "INFO" "将执行以下修复操作："
                 log "INFO" "1. 修复前端Dockerfile中的npm ci问题"
-                log "INFO" "2. 修复部署脚本中的后端路径问题"
-                log "INFO" "3. 优化后端Dockerfile（多阶段构建）"
-                log "INFO" "4. 修复配置文件中的引号问题"
+                log "INFO" "2. 修复前端ESLint错误"
+                log "INFO" "3. 修复部署脚本中的后端路径问题"
+                log "INFO" "4. 优化后端Dockerfile（多阶段构建）"
+                log "INFO" "5. 修复配置文件中的引号问题"
             fi
             ;;
         "fix-frontend")
@@ -458,6 +508,13 @@ main() {
                 fix_frontend_dockerfile
             else
                 log "INFO" "将修复前端Dockerfile中的npm ci问题"
+            fi
+            ;;
+        "fix-eslint")
+            if [ "$dry_run" = false ]; then
+                fix_frontend_eslint
+            else
+                log "INFO" "将修复前端ESLint错误"
             fi
             ;;
         "fix-backend")

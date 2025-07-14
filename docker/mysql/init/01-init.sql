@@ -142,6 +142,7 @@ CREATE TABLE IF NOT EXISTS `order_item` (
   `quantity` int NOT NULL COMMENT '购买数量',
   `total_amount` decimal(10,2) NOT NULL COMMENT '小计金额',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `deleted` tinyint DEFAULT '0' COMMENT '是否删除：0-否，1-是',
   PRIMARY KEY (`id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_product_id` (`product_id`)

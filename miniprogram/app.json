@@ -14,7 +14,8 @@
     "pages/image/manage",
     "pages/address/list",
     "pages/address/edit",
-    "pages/privacy-test/privacy-test"
+    "pages/privacy-test/privacy-test",
+    "pages/ai-chat/ai-chat"
   ],
   "tabBar": {
     "color": "#7A7E83",
@@ -57,8 +58,10 @@
     "backgroundColor": "#f8f8f8"
   },
   "networkTimeout": {
-    "request": 10000,
-    "downloadFile": 10000
+    "request": 60000,
+    "downloadFile": 30000,
+    "uploadFile": 30000,
+    "connectSocket": 30000
   },
   "debug": false,
   "sitemapLocation": "sitemap.json",
@@ -76,6 +79,8 @@
     "kbone": false,
     "weui": false
   },
-
+  "functionalPages": {
+    "independent": false
+  },
   "__usePrivacyCheck__": true
 }
