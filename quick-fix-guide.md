@@ -58,6 +58,9 @@ bash fix-deployment-issues.sh fix-config        # 仅修复配置问题
 # 修复Sass弃用警告
 bash fix-sass-deprecation.sh
 
+# 代码质量检查
+bash quality-check.sh
+
 # 验证修复结果
 bash fix-deployment-issues.sh verify
 
@@ -293,6 +296,32 @@ sudo systemctl restart docker
 2. 检查日志文件：`logs/deploy.log`
 3. 运行诊断命令：`./deploy-automation.sh status`
 
+## 代码质量增强
+
+### 当前状态
+✅ **所有ESLint错误已修复**
+- 未使用的变量已清理
+- Console语句已处理
+- 构建成功，无错误输出
+
+### 质量检查
+```bash
+# 运行代码质量检查
+bash quality-check.sh
+
+# 手动ESLint检查
+cd admin-frontend
+npm run lint
+
+# 构建测试
+npm run build
+```
+
+### 进一步优化建议
+详细的代码质量增强建议请参考：
+- `code-quality-enhancement-recommendations.md` - 完整的优化指南
+- 包含组件拆分、类型安全、性能优化等建议
+
 ## 总结
 
 通过以上修复，您的部署问题应该已经解决：
@@ -302,5 +331,6 @@ sudo systemctl restart docker
 - ✅ 后端镜像可以正常构建
 - ✅ 配置文件可以正常加载
 - ✅ 部署脚本功能完整
+- ✅ 代码质量检查通过
 
 现在可以继续进行正常的部署流程了！
