@@ -17,7 +17,12 @@
 - 代码质量检查失败
 **状态：** ✅ 已修复
 
-### 3. 后端镜像构建失败
+### 3. Sass弃用警告问题
+**错误信息：** `legacy-js-api` 和 `@import` 弃用警告
+**原因：** 使用了旧版Sass API和@import语法
+**状态：** ✅ 已修复
+
+### 4. 后端镜像构建失败
 **错误信息：** `failed to solve: process "/bin/sh -c apt-get update && apt-get install -y maven" did not complete successfully: exit code: 100`
 **原因：** 
 - Dockerfile中重复apt-get update和Maven安装问题
@@ -49,6 +54,9 @@ bash fix-deployment-issues.sh fix-eslint        # 修复前端ESLint错误
 bash fix-deployment-issues.sh fix-backend       # 仅修复后端路径问题
 bash fix-deployment-issues.sh optimize-backend  # 优化后端Dockerfile
 bash fix-deployment-issues.sh fix-config        # 仅修复配置问题
+
+# 修复Sass弃用警告
+bash fix-sass-deprecation.sh
 
 # 验证修复结果
 bash fix-deployment-issues.sh verify
