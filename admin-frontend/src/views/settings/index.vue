@@ -522,7 +522,7 @@ const paymentFormRef = ref();
 const smsFormRef = ref();
 const imageFormRef = ref();
 
-// 上传地址 - 已移除未使用的变量
+
 
 // 基本设置表单
 const basicForm = reactive({
@@ -637,7 +637,7 @@ const handleDeliveryTimeChange = (times) => {
   }
 };
 
-// Logo上传相关函数已移除 - 使用ImageUpload组件处理
+
 
 // 保存基本设置
 const handleBasicSubmit = async () => {
@@ -729,7 +729,7 @@ const handleSmsTest = async () => {
     testLoading.value = true;
 
     // 模拟API调用
-    // console.log('发送测试短信到:', phone);
+    
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
     ElMessage.success(`测试短信已发送到 ${phone}`)
@@ -815,7 +815,7 @@ const formatTime = (time) => {
   return time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-';
 };
 
-// 保存图片设置 - 已移除未使用的函数
+
 
 // 加载图片设置
 const loadImageSettings = async () => {
@@ -823,7 +823,7 @@ const loadImageSettings = async () => {
     const response = await getSystemImages();
     Object.assign(imageForm, response.data);
   } catch (error) {
-    // console.error('加载图片设置失败:', error);
+    
     ElMessage.error('加载图片设置失败');
   }
 };
